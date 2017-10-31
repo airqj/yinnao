@@ -1,5 +1,6 @@
 package com.example.qjb.yinnao
 
+import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color.*
 import android.net.Uri
@@ -28,12 +29,13 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     private var mBtnTestStatus:Boolean = false
 
     fun doAddY() {
-        if(mScrollView?.bottom!! >= mBigImageView?.bottom!!) {
+        //if(mScrollView?.bottom!! >= mBigImageView?.bottom!!) {
             mScrollView?.scrollTo(0, mScrollView?.scrollY!!.plus(1))
-            System.out.println("Time Out")
-        }
-        else {
-        }
+            System.out.println(mScrollView?.bottom)
+            System.out.println(mBigImageView?.scrollY)
+        //}
+        //else {
+        //}
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,8 +54,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
 
     override fun onClick(v: View?) {
         if(v?.id == mBtnTest?.id) {
-            if(!mBtnTestStatus) {
-                System.out.println("Btn Click")
+            if(mBtnTestStatus == false) {
                 timer.schedule(timerTask { doAddY() }, 1000, 100)
                 mBtnTestStatus = true
             }
