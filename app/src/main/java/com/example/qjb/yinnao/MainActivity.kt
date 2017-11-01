@@ -29,13 +29,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     private var mBtnTestStatus:Boolean = false
 
     fun doAddY() {
-        //if(mScrollView?.bottom!! >= mBigImageView?.bottom!!) {
             mScrollView?.scrollTo(0, mScrollView?.scrollY!!.plus(1))
-            System.out.println(mScrollView?.bottom)
-            System.out.println(mBigImageView?.scrollY)
-        //}
-        //else {
-        //}
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -37,6 +37,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/mScrollView"
-        app:srcCompat="@android:drawable/ic_media_play" />
+        app:srcCompat="@drawable/status_change" />
 
 </android.support.constraint.ConstraintLayout>
