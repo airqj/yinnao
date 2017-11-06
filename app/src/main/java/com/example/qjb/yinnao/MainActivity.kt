@@ -19,6 +19,16 @@ import com.github.piasy.biv.view.BigImageView
 import com.github.piasy.biv.loader.fresco.FrescoImageLoader
 import java.util.*
 import kotlin.concurrent.timerTask
+import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm
+import be.tarsos.dsp.pitch.PitchProcessor
+import be.tarsos.dsp.AudioProcessor
+import android.widget.TextView
+import be.tarsos.dsp.AudioEvent
+import be.tarsos.dsp.pitch.PitchDetectionResult
+import be.tarsos.dsp.pitch.PitchDetectionHandler
+import be.tarsos.dsp.io.android.AudioDispatcherFactory
+
+
 
 class MainActivity : AppCompatActivity(),OnClickListener {
 
@@ -27,8 +37,9 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     private var mBtnTest:ImageButton? = null
     private var timer = Timer()
     private var mBtnTestStatus:Boolean = false
+    private var textView:TextView? = null
 
-    fun doAddY() {
+    private fun doAddY() {
             mScrollView?.scrollTo(0, mScrollView?.scrollY!!.plus(1))
     }
 
@@ -40,10 +51,13 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         mBigImageView = findViewById(R.id.mBigImageView)
         mScrollView   = findViewById(R.id.mScrollView)
         mBtnTest      = findViewById(R.id.btnTest)
+        textView      = findViewById(R.id.textView)
 
         mBtnTest?.setOnClickListener(this)
         mBigImageView?.setOptimizeDisplay(false)
         mBigImageView?.showImage(Uri.parse("http://ww1.sinaimg.cn/mw690/005Fj2RDgw1f9mvl4pivvj30c82ougw3.jpg"))
+
+        TarosDSP()
     }
 
     override fun onClick(v: View?) {
@@ -58,5 +72,20 @@ class MainActivity : AppCompatActivity(),OnClickListener {
                 timer = Timer()
             }
         }
+    }
+
+    fun TarosDSP() {
+        val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0)
+        val pdh = PitchDetectionHandler { result, e ->
+            val pitchInHz = result.pitch
+            runOnUiThread {
+                textView?.setText("" + pitchInHz)
+                //val text = findViewById(R.id.textView1) as TextView
+                //text.text = "" + pitchInHz
+            }
+        }
+        val p = PitchProcessor(PitchEstimationAlgorithm.FFT_YIN, 22050f, 1024, pdh)
+        dispatcher.addAudioProcessor(p)
+        Thread(dispatcher, "Audio Dispatcher").start()
     }
 }
