@@ -21,6 +21,7 @@ allprojects {
         jcenter()
         maven{url  "http://dl.bintray.com/piasy/maven"}
         maven { url 'https://jitpack.io' }
+        maven { url "https://repo.maven.apache.org/maven2" }
     }
 }
 

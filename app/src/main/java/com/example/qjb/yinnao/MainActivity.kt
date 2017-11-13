@@ -28,7 +28,8 @@ import be.tarsos.dsp.pitch.PitchDetectionResult
 import be.tarsos.dsp.pitch.PitchDetectionHandler
 import be.tarsos.dsp.io.android.AudioDispatcherFactory
 
-
+import org.jpmml.android.EvaluatorUtil
+import java.io.FileInputStream
 
 class MainActivity : AppCompatActivity(),OnClickListener {
 
@@ -51,13 +52,16 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         mBigImageView = findViewById(R.id.mBigImageView)
         mScrollView   = findViewById(R.id.mScrollView)
         mBtnTest      = findViewById(R.id.btnTest)
-        textView      = findViewById(R.id.textView)
+//        textView      = findViewById(R.id.textView)
 
         mBtnTest?.setOnClickListener(this)
         mBigImageView?.setOptimizeDisplay(false)
         mBigImageView?.showImage(Uri.parse("http://ww1.sinaimg.cn/mw690/005Fj2RDgw1f9mvl4pivvj30c82ougw3.jpg"))
 
         TarosDSP()
+
+        val modelFile = FileInputStream("")
+        val model = EvaluatorUtil.createEvaluator(modelFile)
     }
 
     override fun onClick(v: View?) {
