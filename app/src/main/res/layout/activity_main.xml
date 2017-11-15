@@ -4,26 +4,25 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.qjb.yinnao.MainActivity">
+    tools:context="com.example.qjb.yinnao.MainActivity"
+    tools:layout_editor_absoluteY="81dp">
 
     <ScrollView
         android:id="@+id/mScrollView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginBottom="15dp"
-        app:layout_constraintBottom_toTopOf="@+id/btnTest"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_width="384dp"
+        android:layout_height="245dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-           <com.github.piasy.biv.view.BigImageView
-            android:id="@+id/mBigImageView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+
+            <com.github.piasy.biv.view.BigImageView
+                android:id="@+id/mBigImageView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
             </com.github.piasy.biv.view.BigImageView>
+
         </LinearLayout>
     </ScrollView>
 
@@ -32,11 +31,25 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="18dp"
+        android:layout_marginEnd="164dp"
         android:text="Button"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/textView"
+        app:srcCompat="@drawable/status_change" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="0dp"
+        android:layout_height="51dp"
+        android:layout_marginBottom="22dp"
+        android:layout_marginEnd="33dp"
+        android:layout_marginStart="39dp"
+        android:text="TextView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btnTest"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/mScrollView"
-        app:srcCompat="@drawable/status_change" />
+        app:layout_constraintVertical_bias="1.0" />
 
 </android.support.constraint.ConstraintLayout>

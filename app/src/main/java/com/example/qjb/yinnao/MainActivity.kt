@@ -1,8 +1,5 @@
 package com.example.qjb.yinnao
 
-import android.content.Context
-import android.content.res.Configuration
-import android.graphics.Color.*
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -11,9 +8,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ScrollView
 import android.view.View.OnClickListener
-import android.widget.Button
 import android.widget.ImageButton
-import bolts.Task
 import com.github.piasy.biv.BigImageViewer
 import com.github.piasy.biv.view.BigImageView
 import com.github.piasy.biv.loader.fresco.FrescoImageLoader
@@ -21,15 +16,16 @@ import java.util.*
 import kotlin.concurrent.timerTask
 import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm
 import be.tarsos.dsp.pitch.PitchProcessor
-import be.tarsos.dsp.AudioProcessor
 import android.widget.TextView
-import be.tarsos.dsp.AudioEvent
-import be.tarsos.dsp.pitch.PitchDetectionResult
 import be.tarsos.dsp.pitch.PitchDetectionHandler
 import be.tarsos.dsp.io.android.AudioDispatcherFactory
+import be.tarsos.dsp.mfcc.MFCC
+import be.tarsos.dsp.AudioEvent
+import be.tarsos.dsp.AudioProcessor
+import be.tarsos.dsp.io.android.AndroidFFMPEGLocator
+import be.tarsos.dsp.util.FFMPEGDownloader
 
-import org.jpmml.android.EvaluatorUtil
-import java.io.FileInputStream
+
 
 class MainActivity : AppCompatActivity(),OnClickListener {
 
@@ -52,16 +48,14 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         mBigImageView = findViewById(R.id.mBigImageView)
         mScrollView   = findViewById(R.id.mScrollView)
         mBtnTest      = findViewById(R.id.btnTest)
-//        textView      = findViewById(R.id.textView)
+        textView      = findViewById(R.id.textView)
 
         mBtnTest?.setOnClickListener(this)
         mBigImageView?.setOptimizeDisplay(false)
         mBigImageView?.showImage(Uri.parse("http://ww1.sinaimg.cn/mw690/005Fj2RDgw1f9mvl4pivvj30c82ougw3.jpg"))
 
-        TarosDSP()
-
-        val modelFile = FileInputStream("")
-        val model = EvaluatorUtil.createEvaluator(modelFile)
+        //TarosDSP()
+        CacularMFCC()
     }
 
     override fun onClick(v: View?) {
@@ -90,6 +84,30 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         }
         val p = PitchProcessor(PitchEstimationAlgorithm.FFT_YIN, 22050f, 1024, pdh)
         dispatcher.addAudioProcessor(p)
+        Thread(dispatcher, "Audio Dispatcher").start()
+    }
+
+    fun CacularMFCC() {
+        val sampleRate = 44100
+        val bufferSize = 2205
+        val bufferOverlap = 1102
+        //val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,bufferSize,bufferOverlap)
+        val dispatcher = AudioDispatcherFactory.fromPipe("/storage/emulated/0/Recorders/lxy.mp3",sampleRate,bufferSize,bufferOverlap)
+        val mfcc = MFCC(bufferSize,sampleRate)
+        dispatcher.addAudioProcessor(mfcc)
+        dispatcher.addAudioProcessor(object : AudioProcessor {
+            override fun processingFinished() {
+            }
+            override fun process(audioEvent: AudioEvent): Boolean {
+                /*
+                runOnUiThread {
+                    textView?.setText("" + mfcc?.mfcc.size)
+                }
+                */
+                System.out.println(mfcc?.mfcc[0])
+                return true
+            }
+        })
         Thread(dispatcher, "Audio Dispatcher").start()
     }
 }
