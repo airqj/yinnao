@@ -22,10 +22,9 @@ import be.tarsos.dsp.io.android.AudioDispatcherFactory
 import be.tarsos.dsp.mfcc.MFCC
 import be.tarsos.dsp.AudioEvent
 import be.tarsos.dsp.AudioProcessor
-import be.tarsos.dsp.io.android.AndroidFFMPEGLocator
-import be.tarsos.dsp.util.FFMPEGDownloader
-
-
+import android.content.res.AssetManager
+import org.jpmml.android.EvaluatorUtil
+import com.example.qjb.yinnao.ModelRF
 
 class MainActivity : AppCompatActivity(),OnClickListener {
 
@@ -35,6 +34,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     private var timer = Timer()
     private var mBtnTestStatus:Boolean = false
     private var textView:TextView? = null
+//    val evaluator = EvaluatorUtil.createEvaluator(assets.open("modelRF.pmml.ser"))
 
     private fun doAddY() {
             mScrollView?.scrollTo(0, mScrollView?.scrollY!!.plus(1))
@@ -91,23 +91,37 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         val sampleRate = 44100
         val bufferSize = 2205
         val bufferOverlap = 1102
-        //val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,bufferSize,bufferOverlap)
-        val dispatcher = AudioDispatcherFactory.fromPipe("/storage/emulated/0/Recorders/lxy.mp3",sampleRate,bufferSize,bufferOverlap)
-        val mfcc = MFCC(bufferSize,sampleRate)
+        val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,bufferSize,bufferOverlap)
+        //val mfcc = MFCC(bufferSize,sampleRate)
+        val mfcc = MFCC(bufferSize, sampleRate.toFloat(), 39, 40, 133.3334f, sampleRate.toFloat() / 2f);
         dispatcher.addAudioProcessor(mfcc)
         dispatcher.addAudioProcessor(object : AudioProcessor {
             override fun processingFinished() {
             }
             override fun process(audioEvent: AudioEvent): Boolean {
-                /*
-                runOnUiThread {
-                    textView?.setText("" + mfcc?.mfcc.size)
-                }
-                */
-                System.out.println(mfcc?.mfcc[0])
+                runOnUiThread({
+                    val res = ModelRF.predict(mfcc?.mfcc)
+                    if(res == 1) {
+                        if(textView?.text == "古琴") {}
+                        else {
+                            textView?.setText("古琴")
+                        }
+                    }
+                    else {
+                        textView?.setText("未识别")
+                    }
+//                    val res = mfcc?.mfcc
+//                    val buffer = audioEvent?.floatBuffer
+                })
                 return true
             }
         })
         Thread(dispatcher, "Audio Dispatcher").start()
+    }
+
+    fun ConstructParams(params : FloatArray) {
+        for(i in params) {
+            println(i)
+        }
     }
 }
