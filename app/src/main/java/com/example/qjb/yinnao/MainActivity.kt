@@ -26,6 +26,7 @@ import android.content.res.AssetManager
 import org.jpmml.android.EvaluatorUtil
 import com.example.qjb.yinnao.ModelRF
 
+
 class MainActivity : AppCompatActivity(),OnClickListener {
 
     private var mBigImageView:BigImageView? = null
@@ -88,6 +89,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     }
 
     fun CacularMFCC() {
+        System.loadLibrary("aubio")
         val sampleRate = 44100
         val bufferSize = 2205
         val bufferOverlap = 1102
@@ -117,11 +119,5 @@ class MainActivity : AppCompatActivity(),OnClickListener {
             }
         })
         Thread(dispatcher, "Audio Dispatcher").start()
-    }
-
-    fun ConstructParams(params : FloatArray) {
-        for(i in params) {
-            println(i)
-        }
     }
 }
