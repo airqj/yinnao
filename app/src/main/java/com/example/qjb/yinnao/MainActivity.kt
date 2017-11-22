@@ -26,7 +26,6 @@ import android.content.res.AssetManager
 import org.jpmml.android.EvaluatorUtil
 import com.example.qjb.yinnao.ModelRF
 
-
 class MainActivity : AppCompatActivity(),OnClickListener {
 
     private var mBigImageView:BigImageView? = null
@@ -35,7 +34,15 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     private var timer = Timer()
     private var mBtnTestStatus:Boolean = false
     private var textView:TextView? = null
-//    val evaluator = EvaluatorUtil.createEvaluator(assets.open("modelRF.pmml.ser"))
+
+    companion object {
+                    init
+                        {
+                           // System.loadLibrary("aubioinvoke")
+                            System.loadLibrary("audio")
+                        }
+    }
+    external fun clean_mf():Void
 
     private fun doAddY() {
             mScrollView?.scrollTo(0, mScrollView?.scrollY!!.plus(1))
@@ -88,8 +95,9 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         Thread(dispatcher, "Audio Dispatcher").start()
     }
 
+
     fun CacularMFCC() {
-        System.loadLibrary("aubio")
+        clean_mf()
         val sampleRate = 44100
         val bufferSize = 2205
         val bufferOverlap = 1102
