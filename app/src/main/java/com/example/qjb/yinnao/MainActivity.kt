@@ -25,6 +25,7 @@ import be.tarsos.dsp.AudioProcessor
 import android.content.res.AssetManager
 import org.jpmml.android.EvaluatorUtil
 import com.example.qjb.yinnao.ModelRF
+import com.example.qjb.yinnao.AubioKit
 
 class MainActivity : AppCompatActivity(),OnClickListener {
 
@@ -34,15 +35,11 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     private var timer = Timer()
     private var mBtnTestStatus:Boolean = false
     private var textView:TextView? = null
-
-    companion object {
-                    init
-                        {
-                           // System.loadLibrary("aubioinvoke")
-                            System.loadLibrary("audio")
-                        }
-    }
-    external fun clean_mf():Void
+    private var aubioKit = AubioKit()
+    private val win_s:Int = 2205
+    private val n_filters = 40
+    private val n_coefs = 39
+    private val samplerate = 44100
 
     private fun doAddY() {
             mScrollView?.scrollTo(0, mScrollView?.scrollY!!.plus(1))
@@ -62,6 +59,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         mBigImageView?.setOptimizeDisplay(false)
         mBigImageView?.showImage(Uri.parse("http://ww1.sinaimg.cn/mw690/005Fj2RDgw1f9mvl4pivvj30c82ougw3.jpg"))
 
+        aubioKit?.args_init(win_s,n_filters,n_coefs,samplerate)
         //TarosDSP()
         CacularMFCC()
     }
@@ -97,20 +95,20 @@ class MainActivity : AppCompatActivity(),OnClickListener {
 
 
     fun CacularMFCC() {
-        clean_mf()
         val sampleRate = 44100
         val bufferSize = 2205
         val bufferOverlap = 1102
         val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,bufferSize,bufferOverlap)
         //val mfcc = MFCC(bufferSize,sampleRate)
-        val mfcc = MFCC(bufferSize, sampleRate.toFloat(), 39, 40, 133.3334f, sampleRate.toFloat() / 2f);
-        dispatcher.addAudioProcessor(mfcc)
+        //val mfcc = MFCC(bufferSize, sampleRate.toFloat(), 39, 40, 133.3334f, sampleRate.toFloat() / 2f);
+        //dispatcher.addAudioProcessor(mfcc)
         dispatcher.addAudioProcessor(object : AudioProcessor {
             override fun processingFinished() {
             }
             override fun process(audioEvent: AudioEvent): Boolean {
+                val mfccFeatrue = aubioKit?.mfcc_compute(audioEvent?.floatBuffer)
                 runOnUiThread({
-                    val res = ModelRF.predict(mfcc?.mfcc)
+                    val res = ModelRF.predict(mfccFeatrue)
                     if(res == 1) {
                         if(textView?.text == "古琴") {}
                         else {

@@ -20,7 +20,7 @@ JNIEXPORT jint JNICALL Java_com_example_qjb_yinnao_AubioKit_args_1init
  * Method:    mfcc_compte
  * Signature: ([F)[F
  */
-JNIEXPORT jfloatArray JNICALL Java_com_example_qjb_yinnao_AubioKit_mfcc_1compte
+JNIEXPORT jfloatArray JNICALL Java_com_example_qjb_yinnao_AubioKit_mfcc_1compute
   (JNIEnv *, jclass, jfloatArray);
 
 /*
