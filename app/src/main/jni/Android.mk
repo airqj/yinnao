@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := aubio
-LOCAL_SRC_FILES := $(LOCAL_PATH)/libaubio.so
+LOCAL_SRC_FILES := $(LOCAL_PATH)/libaubio.so 
 APP_BUILD_SCRIPT := $(LOCAL_PATH)/Android.mk
 include $(PREBUILT_SHARED_LIBRARY)
 include $(CLEAR_VARS)
