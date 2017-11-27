@@ -26,7 +26,8 @@ class AubioKit(i:InputStream) {
     external fun clean_mf()
 
     fun predict(args: FloatArray): Int {
-        val fVecDence = mfcc_compute(args)
+        //val fVecDence = mfcc_compute(args)
+        val fVecDence = args
         val feature = FVec.Transformer.fromArray(fVecDence,false)
         val prediction = predictor.predictSingle(feature)
         return Math.round(prediction).toInt()
