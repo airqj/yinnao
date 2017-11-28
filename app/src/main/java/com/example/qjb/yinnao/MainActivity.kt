@@ -44,6 +44,12 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     private val samplerate = 44100
     private val udpSender = UDP()
 
+    private var mfccBuffer:FloatArray? = null
+    private var preditionResult:Int? = null
+    private var continuteNumClassTrue:Int = 0
+    private var continuteNumClassFalse:Int = 0
+    private val threhold = 10
+
     private fun doAddY() {
             mScrollView?.scrollTo(0, mScrollView?.scrollY!!.plus(1))
     }
@@ -62,9 +68,9 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         mBigImageView?.setOptimizeDisplay(false)
         mBigImageView?.showImage(Uri.parse("http://ww1.sinaimg.cn/mw690/005Fj2RDgw1f9mvl4pivvj30c82ougw3.jpg"))
 
-        val ins = applicationContext.assets.open("modelxgb")
+        val ins = applicationContext.assets.open("model")
         aubioKit = AubioKit(ins)
-        aubioKit?.args_init(win_s,n_filters,n_coefs,samplerate)
+//        aubioKit?.args_init(win_s,n_filters,n_coefs,samplerate)
         //TarosDSP()
         CacularMFCC()
     }
@@ -85,7 +91,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
 
     fun TarosDSP() {
         val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0)
-        val pdh = PitchDetectionHandler { result, e ->
+        val pdh = PitchDetectionHandler { result, _ ->
             val pitchInHz = result.pitch
             runOnUiThread {
                 textView?.setText("" + pitchInHz)
@@ -112,22 +118,38 @@ class MainActivity : AppCompatActivity(),OnClickListener {
             }
             override fun process(audioEvent: AudioEvent): Boolean {
                 //val res = aubioKit?.predict(audioEvent?.floatBuffer)
-                val mfccBuffer = mfcc?.mfcc
-                udpSender.send(mfccBuffer)
-                runOnUiThread({
-                    val res = aubioKit?.predict(mfccBuffer)
-                    if(res == 1) {
-                        if(textView?.text == "古琴") {}
-                        else {
-                            textView?.setText("古琴")
+                mfccBuffer = mfcc.mfcc
+                preditionResult = aubioKit?.predict(mfccBuffer!!)
+                //udpSender.send(mfccBuffer!!) use to get data from phone
+                if(preditionResult == 1) {
+                    continuteNumClassTrue += 1
+                    continuteNumClassFalse = 0
+                }
+                else {
+                    continuteNumClassFalse += 1
+                    continuteNumClassTrue   = 0
+                }
+                if(continuteNumClassFalse == threhold || continuteNumClassTrue == threhold) {
+                        if(continuteNumClassTrue == threhold) {
+                            if(textView?.text == "古琴") {}
+                            else {
+                                runOnUiThread({
+                                    textView?.setText("古琴")}
+                                )
+                            }
+                            continuteNumClassTrue = 0
                         }
-                    }
-                    else {
-                        textView?.setText("未识别")
-                    }
-//                    val res = mfcc?.mfcc
-//                    val buffer = audioEvent?.floatBuffer
-                })
+                        else {
+                            if(textView?.text == "未识别") {
+                                print("do nothing")}
+                            else {
+                                runOnUiThread({
+                                    textView?.setText("未识别")
+                                })
+                            }
+                            continuteNumClassFalse = 0
+                        }
+                }
                 return true
             }
         })
