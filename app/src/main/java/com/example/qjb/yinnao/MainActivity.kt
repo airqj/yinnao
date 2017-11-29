@@ -23,10 +23,12 @@ import be.tarsos.dsp.mfcc.MFCC
 import be.tarsos.dsp.AudioEvent
 import be.tarsos.dsp.AudioProcessor
 import android.content.res.AssetManager
+import android.os.Environment
 import org.jpmml.android.EvaluatorUtil
 import com.example.qjb.yinnao.ModelRF
 import com.example.qjb.yinnao.AubioKit
 import com.example.qjb.yinnao.UDP
+import com.example.qjb.yinnao.WavUtils
 
 class MainActivity : AppCompatActivity(),OnClickListener {
 
@@ -36,6 +38,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     private var timer = Timer()
     private var mBtnTestStatus:Boolean = false
     private var textView:TextView? = null
+    private var wavUtil:WavUtils?  = null
 
     private var aubioKit:AubioKit? = null
     private val win_s:Int = 2205
@@ -63,6 +66,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         mScrollView   = findViewById(R.id.mScrollView)
         mBtnTest      = findViewById(R.id.btnTest)
         textView      = findViewById(R.id.textView)
+        wavUtil       = WavUtils(Environment.getExternalStorageDirectory().path + "/Recorders/")
 
         mBtnTest?.setOnClickListener(this)
         mBigImageView?.setOptimizeDisplay(false)
@@ -109,6 +113,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         val sampleRate = 44100
         val bufferSize = 2205
         val bufferOverlap = 1102
+        wavUtil?.openFile()
         val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,bufferSize,bufferOverlap)
         //val mfcc = MFCC(bufferSize,sampleRate)
         val mfcc = MFCC(bufferSize, sampleRate.toFloat(), 39, 40, 133.3334f, sampleRate.toFloat() / 2f);
@@ -131,15 +136,23 @@ class MainActivity : AppCompatActivity(),OnClickListener {
                 }
                 if(continuteNumClassFalse == threhold || continuteNumClassTrue == threhold) {
                         if(continuteNumClassTrue == threhold) {
+                            wavUtil?.write2Wav(audioEvent?.byteBuffer)
+                            // start write to wav file
+
+                            /*
                             if(textView?.text == "古琴") {}
                             else {
                                 runOnUiThread({
                                     textView?.setText("古琴")}
                                 )
                             }
+                            */
                             continuteNumClassTrue = 0
                         }
                         else {
+                            //start play wav file
+                            wavUtil?.closeFile()
+                            /*
                             if(textView?.text == "未识别") {
                                 print("do nothing")}
                             else {
@@ -147,6 +160,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
                                     textView?.setText("未识别")
                                 })
                             }
+                            */
                             continuteNumClassFalse = 0
                         }
                 }
