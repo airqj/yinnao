@@ -4,12 +4,15 @@ package com.example.qjb.yinnao
  * Created by qinjianbo on 17-11-29.
  */
 
-import android.media.AudioRecord
+import android.media.*
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import android.text.format.DateFormat
-import android.media.MediaPlayer
+import org.dmg.pmml.False
+import org.dmg.pmml.True
+import java.io.FileInputStream
+import java.io.FileNotFoundException
 
 private class Header() {
     /*
@@ -32,11 +35,11 @@ private class Header() {
 
 class WavUtils(storagePath:String) {
 
-    val mills = System.currentTimeMillis()
-    val format = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss")
-    val fileName = storagePath + format.format(mills) + ".wav"
-    var wavFile:FileOutputStream? = null
-    val mediaPlayer:MediaPlayer?  = null
+    private val mills = System.currentTimeMillis()
+    private val format = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss")
+    private val fileName = storagePath + format.format(mills) + ".pcm"
+    private var wavFile: FileOutputStream? = null
+    private val mediaPlayer: MediaPlayer? = null
 
     fun openFile() {
         wavFile = FileOutputStream(fileName)
@@ -47,16 +50,41 @@ class WavUtils(storagePath:String) {
     }
 
     fun closeFile() {
-        wavFile?.close()
+        try {
+            wavFile?.close()
+        } catch (e: FileNotFoundException) {
+
+        }
     }
 
-    fun fileSizeIsGreaterThanZero() {
+    private fun fileSizeIsGreaterThanZero(): Boolean {
+        try {
+            val file = File(fileName)
+            val fileLength = file.length()
+            return fileLength > 0
+        } catch (e: FileNotFoundException) {
+            return false
+        }
     }
 
     fun play() {
-        mediaPlayer?.setDataSource(fileName)
-        mediaPlayer?.prepare()
-        mediaPlayer?.start()
-
+        if (fileSizeIsGreaterThanZero()) { // if file size > 0 ,play the file
+            var buffer = ByteArray(512 * 1024)
+            val intSize = AudioTrack.getMinBufferSize(44100,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT)
+            val mAudioTrack = AudioTrack(AudioManager.STREAM_MUSIC,44100,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT,intSize,AudioTrack.MODE_STREAM)
+            val fis = FileInputStream(File(fileName))
+            val fileLength = File(fileName).length()
+            var readSize = 0
+            while (readSize < fileLength) {
+                val ret =  fis.read(buffer)
+                if(ret > 0) {
+                    mAudioTrack?.write(buffer,0,ret)
+                    readSize += ret
+                }
+            }
+            mAudioTrack.release()
+        }
     }
+
+
 }

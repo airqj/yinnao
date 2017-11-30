@@ -29,6 +29,8 @@ import com.example.qjb.yinnao.ModelRF
 import com.example.qjb.yinnao.AubioKit
 import com.example.qjb.yinnao.UDP
 import com.example.qjb.yinnao.WavUtils
+import com.czt.mp3recorder.MP3Recorder
+import java.io.File
 
 class MainActivity : AppCompatActivity(),OnClickListener {
 
@@ -112,7 +114,8 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     fun CacularMFCC() {
         val sampleRate = 44100
         val bufferSize = 2205
-        val bufferOverlap = 1102
+        val bufferOverlap = 0
+        var recording = false
         wavUtil?.openFile()
         val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,bufferSize,bufferOverlap)
         //val mfcc = MFCC(bufferSize,sampleRate)
@@ -122,6 +125,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
             override fun processingFinished() {
             }
             override fun process(audioEvent: AudioEvent): Boolean {
+                if(recording) Thread({wavUtil?.write2Wav(audioEvent?.byteBuffer)},"write file").start() // if recording is setted, that record audio
                 //val res = aubioKit?.predict(audioEvent?.floatBuffer)
                 mfccBuffer = mfcc.mfcc
                 preditionResult = aubioKit?.predict(mfccBuffer!!)
@@ -135,33 +139,18 @@ class MainActivity : AppCompatActivity(),OnClickListener {
                     continuteNumClassTrue   = 0
                 }
                 if(continuteNumClassFalse == threhold || continuteNumClassTrue == threhold) {
-                        if(continuteNumClassTrue == threhold) {
-                            wavUtil?.write2Wav(audioEvent?.byteBuffer)
+                        if(continuteNumClassFalse == threhold) {
                             // start write to wav file
-
-                            /*
-                            if(textView?.text == "古琴") {}
-                            else {
-                                runOnUiThread({
-                                    textView?.setText("古琴")}
-                                )
-                            }
-                            */
-                            continuteNumClassTrue = 0
+                            recording = true
+                            // wavUtil?.write2Wav(audioEvent?.byteBuffer)
+                            continuteNumClassFalse = 0
                         }
                         else {
+                            recording = false
                             //start play wav file
+                            wavUtil?.play()
                             wavUtil?.closeFile()
-                            /*
-                            if(textView?.text == "未识别") {
-                                print("do nothing")}
-                            else {
-                                runOnUiThread({
-                                    textView?.setText("未识别")
-                                })
-                            }
-                            */
-                            continuteNumClassFalse = 0
+                            continuteNumClassTrue = 0
                         }
                 }
                 return true
