@@ -11,7 +11,7 @@ import java.util.Arrays
 
 class UDP() {
     private val ds = DatagramSocket()
-    private val remoteIp = "192.168.0.133"
+    private val remoteIp = "192.168.2.31"
     fun send(args: FloatArray) {
         val buffer = Arrays.toString(args).toByteArray()
         val dp = DatagramPacket(buffer,buffer.size, InetAddress.getByName(remoteIp), 9999)

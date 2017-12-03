@@ -8,40 +8,24 @@ import android.media.*
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
-import android.text.format.DateFormat
-import org.dmg.pmml.False
-import org.dmg.pmml.True
-import java.io.FileInputStream
 import java.io.FileNotFoundException
 
-private class Header() {
-    /*
-    * writeString(output, "RIFF"); // chunk id
-        writeInt(output, 36 + rawData.length); // chunk size
-        writeString(output, "WAVE"); // format
-        writeString(output, "fmt "); // subchunk 1 id
-        writeInt(output, 16); // subchunk 1 size
-        writeShort(output, (short) 1); // audio format (1 = PCM)
-        writeShort(output, (short) 1); // number of channels
-        writeInt(output, Constants.RECORDER_SAMPLERATE); // sample rate
-        writeInt(output, Constants.RECORDER_SAMPLERATE * 2); // byte rate
-        writeShort(output, (short) 2); // block align
-        writeShort(output, (short) 16); // bits per sample
-        writeString(output, "data"); // subchunk 2 id
-        writeInt(output, rawData.length); // subchunk 2 size
-        */
-    val flag = "RIFF"
-}
+import com.example.qjb.yinnao.Wav
 
 class WavUtils(storagePath:String) {
 
-    private val mills = System.currentTimeMillis()
+    private val storagePath = storagePath
     private val format = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss")
-    private val fileName = storagePath + format.format(mills) + ".pcm"
     private var wavFile: FileOutputStream? = null
     private val mediaPlayer: MediaPlayer? = null
 
-    fun openFile() {
+    fun newFileName():String {
+        val mills = System.currentTimeMillis()
+        val fileName = storagePath + format.format(mills) + ".wav"
+        return fileName
+    }
+
+    fun openFile(fileName:String) {
         wavFile = FileOutputStream(fileName)
     }
 
@@ -51,13 +35,14 @@ class WavUtils(storagePath:String) {
 
     fun closeFile() {
         try {
+            wavFile?.flush()
             wavFile?.close()
         } catch (e: FileNotFoundException) {
 
         }
     }
 
-    private fun fileSizeIsGreaterThanZero(): Boolean {
+    private fun fileSizeIsGreaterThanZero(fileName: String): Boolean {
         try {
             val file = File(fileName)
             val fileLength = file.length()
@@ -67,24 +52,14 @@ class WavUtils(storagePath:String) {
         }
     }
 
-    fun play() {
-        if (fileSizeIsGreaterThanZero()) { // if file size > 0 ,play the file
-            var buffer = ByteArray(512 * 1024)
-            val intSize = AudioTrack.getMinBufferSize(44100,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT)
-            val mAudioTrack = AudioTrack(AudioManager.STREAM_MUSIC,44100,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT,intSize,AudioTrack.MODE_STREAM)
-            val fis = FileInputStream(File(fileName))
-            val fileLength = File(fileName).length()
-            var readSize = 0
-            while (readSize < fileLength) {
-                val ret =  fis.read(buffer)
-                if(ret > 0) {
-                    mAudioTrack?.write(buffer,0,ret)
-                    readSize += ret
-                }
+    fun play(fileName: String) {
+        try {
+            val file = File(fileName)
+            if (file?.exists()) {
+                Wav(file).writeWavHeader()
             }
-            mAudioTrack.release()
+        } catch (e:FileNotFoundException) {
+
         }
     }
-
-
 }

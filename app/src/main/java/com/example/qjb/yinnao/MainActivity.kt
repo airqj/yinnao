@@ -53,7 +53,8 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     private var preditionResult:Int? = null
     private var continuteNumClassTrue:Int = 0
     private var continuteNumClassFalse:Int = 0
-    private val threhold = 10
+    private val startThrehold = 10
+    private val stopThrehold  = 20
 
     private fun doAddY() {
             mScrollView?.scrollTo(0, mScrollView?.scrollY!!.plus(1))
@@ -116,20 +117,22 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         val bufferSize = 2205
         val bufferOverlap = 0
         var recording = false
-        wavUtil?.openFile()
+        var fileName:String? = null
         val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,bufferSize,bufferOverlap)
-        //val mfcc = MFCC(bufferSize,sampleRate)
         val mfcc = MFCC(bufferSize, sampleRate.toFloat(), 39, 40, 133.3334f, sampleRate.toFloat() / 2f);
         dispatcher.addAudioProcessor(mfcc)
         dispatcher.addAudioProcessor(object : AudioProcessor {
             override fun processingFinished() {
             }
             override fun process(audioEvent: AudioEvent): Boolean {
-                if(recording) Thread({wavUtil?.write2Wav(audioEvent?.byteBuffer)},"write file").start() // if recording is setted, that record audio
+                // if recording is setted,that record audio
+                if(recording) {
+                    wavUtil?.write2Wav(audioEvent?.byteBuffer)
+                }
                 //val res = aubioKit?.predict(audioEvent?.floatBuffer)
                 mfccBuffer = mfcc.mfcc
                 preditionResult = aubioKit?.predict(mfccBuffer!!)
-                //udpSender.send(mfccBuffer!!) use to get data from phone
+                udpSender.send(mfccBuffer!!) //use to get data from phone
                 if(preditionResult == 1) {
                     continuteNumClassTrue += 1
                     continuteNumClassFalse = 0
@@ -138,19 +141,27 @@ class MainActivity : AppCompatActivity(),OnClickListener {
                     continuteNumClassFalse += 1
                     continuteNumClassTrue   = 0
                 }
-                if(continuteNumClassFalse == threhold || continuteNumClassTrue == threhold) {
-                        if(continuteNumClassFalse == threhold) {
+                if(continuteNumClassFalse == stopThrehold || continuteNumClassTrue == startThrehold) {
+                        if(continuteNumClassTrue == startThrehold) {
                             // start write to wav file
-                            recording = true
+                            if(recording == false) {
+                                recording = true
+                                fileName = wavUtil?.newFileName()
+                                wavUtil?.openFile(fileName!!)
+                                runOnUiThread({ textView?.setText("start record") })
+                            }
                             // wavUtil?.write2Wav(audioEvent?.byteBuffer)
-                            continuteNumClassFalse = 0
+                            continuteNumClassTrue = 0
                         }
                         else {
-                            recording = false
+                            runOnUiThread({textView?.setText("stop recording")})
                             //start play wav file
-                            wavUtil?.play()
-                            wavUtil?.closeFile()
-                            continuteNumClassTrue = 0
+                            if(recording) {
+                                wavUtil?.play(fileName!!)
+                                recording = false
+                            }
+                            //wavUtil?.closeFile()
+                            continuteNumClassFalse = 0
                         }
                 }
                 return true
