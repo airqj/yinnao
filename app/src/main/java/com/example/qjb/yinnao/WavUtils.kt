@@ -9,6 +9,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.io.FileNotFoundException
+import android.media.MediaPlayer
 
 import com.example.qjb.yinnao.Wav
 
@@ -57,9 +58,14 @@ class WavUtils(storagePath:String) {
             val file = File(fileName)
             if (file?.exists()) {
                 Wav(file).writeWavHeader()
+                val mMediaPlayer = MediaPlayer()
+                mMediaPlayer?.setOnCompletionListener {  }
+                mMediaPlayer?.setDataSource(fileName)
+                mMediaPlayer?.prepare()
+                mMediaPlayer?.start()
+                mMediaPlayer?.release()
             }
         } catch (e:FileNotFoundException) {
-
         }
     }
 }

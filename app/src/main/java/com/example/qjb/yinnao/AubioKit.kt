@@ -28,7 +28,7 @@ class AubioKit(i:InputStream) {
         val fVecDence = args
         val feature = FVec.Transformer.fromArray(fVecDence,false)
         val prediction = predictor.predictSingle(feature)
-        return if(prediction > 0.6) 1 else 0
+        return if(prediction > 0.5) 1 else 0
     }
 
     companion object {

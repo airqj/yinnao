@@ -29,7 +29,6 @@ import com.example.qjb.yinnao.ModelRF
 import com.example.qjb.yinnao.AubioKit
 import com.example.qjb.yinnao.UDP
 import com.example.qjb.yinnao.WavUtils
-import com.czt.mp3recorder.MP3Recorder
 import java.io.File
 
 class MainActivity : AppCompatActivity(),OnClickListener {
@@ -55,6 +54,9 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     private var continuteNumClassFalse:Int = 0
     private val startThrehold = 10
     private val stopThrehold  = 20
+    private var recording = false
+    private var fileName:String? = null
+    private var stopRecord = false
 
     private fun doAddY() {
             mScrollView?.scrollTo(0, mScrollView?.scrollY!!.plus(1))
@@ -75,7 +77,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         mBigImageView?.setOptimizeDisplay(false)
         mBigImageView?.showImage(Uri.parse("http://ww1.sinaimg.cn/mw690/005Fj2RDgw1f9mvl4pivvj30c82ougw3.jpg"))
 
-        val ins = applicationContext.assets.open("model")
+        val ins = applicationContext.assets.open("modelXGB")
         aubioKit = AubioKit(ins)
 //        aubioKit?.args_init(win_s,n_filters,n_coefs,samplerate)
         //TarosDSP()
@@ -84,6 +86,9 @@ class MainActivity : AppCompatActivity(),OnClickListener {
 
     override fun onClick(v: View?) {
         if(v?.id == mBtnTest?.id) {
+            stopRecord = true
+            wavUtil?.play(fileName!!)
+            /*
             if(mBtnTestStatus == false) {
                 timer.schedule(timerTask { doAddY() }, 1000, 100)
                 mBtnTestStatus = true
@@ -93,7 +98,9 @@ class MainActivity : AppCompatActivity(),OnClickListener {
                 mBtnTestStatus = false
                 timer = Timer()
             }
+            */
         }
+
     }
 
     fun TarosDSP() {
@@ -116,8 +123,6 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         val sampleRate = 44100
         val bufferSize = 2205
         val bufferOverlap = 0
-        var recording = false
-        var fileName:String? = null
         val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,bufferSize,bufferOverlap)
         val mfcc = MFCC(bufferSize, sampleRate.toFloat(), 39, 40, 133.3334f, sampleRate.toFloat() / 2f);
         dispatcher.addAudioProcessor(mfcc)
@@ -126,18 +131,18 @@ class MainActivity : AppCompatActivity(),OnClickListener {
             }
             override fun process(audioEvent: AudioEvent): Boolean {
                 // if recording is setted,that record audio
-                if(recording) {
+                if(recording && !stopRecord) {
                     wavUtil?.write2Wav(audioEvent?.byteBuffer)
                 }
                 //val res = aubioKit?.predict(audioEvent?.floatBuffer)
                 mfccBuffer = mfcc.mfcc
                 preditionResult = aubioKit?.predict(mfccBuffer!!)
-                udpSender.send(mfccBuffer!!) //use to get data from phone
-                if(preditionResult == 1) {
+                //udpSender.send(mfccBuffer!!) //use to get data from phone
+                if(preditionResult == 1 && !stopRecord) {
                     continuteNumClassTrue += 1
                     continuteNumClassFalse = 0
                 }
-                else {
+                else if(preditionResult == 0 && !stopRecord){
                     continuteNumClassFalse += 1
                     continuteNumClassTrue   = 0
                 }
@@ -154,6 +159,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
                             continuteNumClassTrue = 0
                         }
                         else {
+                            stopRecord = true
                             runOnUiThread({textView?.setText("stop recording")})
                             //start play wav file
                             if(recording) {
