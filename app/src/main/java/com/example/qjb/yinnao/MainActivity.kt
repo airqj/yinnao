@@ -156,7 +156,6 @@ class MainActivity : AppCompatActivity(),OnClickListener {
                                 runOnUiThread({ textView?.setText("start record") })
                             }
                             // wavUtil?.write2Wav(audioEvent?.byteBuffer)
-                            continuteNumClassTrue = 0
                         }
                         else {
                             stopRecord = true
@@ -167,8 +166,9 @@ class MainActivity : AppCompatActivity(),OnClickListener {
                                 recording = false
                             }
                             //wavUtil?.closeFile()
-                            continuteNumClassFalse = 0
                         }
+                    continuteNumClassTrue = 0
+                    continuteNumClassFalse = 0
                 }
                 return true
             }
