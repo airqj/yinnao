@@ -31,8 +31,8 @@ public class Wav(f:File) {
     fun writeWavHeader() {
         val wavFile = randomAccessFile(file)
         wavFile.seek(0) // to the beginning
-        wavFile.write(WavHeader(wavFile?.length()).toBytes())
-        wavFile?.close()
+        wavFile.write(WavHeader(wavFile.length()).toBytes())
+        wavFile.close()
     }
 
     private fun randomAccessFile(file: File): RandomAccessFile {

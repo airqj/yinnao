@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         mBigImageView?.setOptimizeDisplay(false)
         mBigImageView?.showImage(Uri.parse("http://ww1.sinaimg.cn/mw690/005Fj2RDgw1f9mvl4pivvj30c82ougw3.jpg"))
 
-        val ins = applicationContext.assets.open("modelXGB")
+        val ins = applicationContext.assets.open("model")
         aubioKit = AubioKit(ins)
 //        aubioKit?.args_init(win_s,n_filters,n_coefs,samplerate)
         //TarosDSP()
@@ -132,7 +132,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
             override fun process(audioEvent: AudioEvent): Boolean {
                 // if recording is setted,that record audio
                 if(recording && !stopRecord) {
-                    wavUtil?.write2Wav(audioEvent?.byteBuffer)
+                    wavUtil?.write2Wav(audioEvent.byteBuffer)
                 }
                 //val res = aubioKit?.predict(audioEvent?.floatBuffer)
                 mfccBuffer = mfcc.mfcc
@@ -146,6 +146,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
                     continuteNumClassFalse += 1
                     continuteNumClassTrue   = 0
                 }
+
                 if(continuteNumClassFalse == stopThrehold || continuteNumClassTrue == startThrehold) {
                         if(continuteNumClassTrue == startThrehold) {
                             // start write to wav file

@@ -56,14 +56,14 @@ class WavUtils(storagePath:String) {
     fun play(fileName: String) {
         try {
             val file = File(fileName)
-            if (file?.exists()) {
+            if (file.exists()) {
                 Wav(file).writeWavHeader()
                 val mMediaPlayer = MediaPlayer()
-                mMediaPlayer?.setOnCompletionListener {  }
-                mMediaPlayer?.setDataSource(fileName)
-                mMediaPlayer?.prepare()
-                mMediaPlayer?.start()
-                mMediaPlayer?.release()
+                mMediaPlayer.setOnCompletionListener {  }
+                mMediaPlayer.setDataSource(fileName)
+                mMediaPlayer.prepare()
+                mMediaPlayer.start()
+                mMediaPlayer.release()
             }
         } catch (e:FileNotFoundException) {
         }
