@@ -28,11 +28,13 @@ class WavUtils(storagePath:String) {
     private var continuteNumClassFalse = 0
     private val startRecordThrehold = 10
     private val stopRecordThrehold  = 10
+    private var enableRecord = false
 
     public val bufferQueue = ArrayBlockingQueue<FloatArray>(1024 * 1024)
     fun process():Int {
         while (true) {
             val audioBuffer = bufferQueue.take()
+            if(enableRecord) write2Wav()
             if(aubioKit?.predict(audioBuffer)!! == 1) {
                 continuteNumClassTure +=1
                 continuteNumClassFalse = 0
@@ -41,53 +43,11 @@ class WavUtils(storagePath:String) {
                 continuteNumClassFalse +=1
                 continuteNumClassTure   =0
             }
-            if(continuteNumClassTure == startRecordThrehold) { // start to record
-                newFileName()
+            if(continuteNumClassTure == startRecordThrehold) { // create wav file and start record
+                openFile(newFileName())
+                enableRecord = true
             }
         }
-        /*
-        // if recording is setted,that record audio
-        if(recording && !stopRecord) {
-            wavUtil?.write2Wav(audioEvent.byteBuffer)
-        }
-        //val res = aubioKit?.predict(audioEvent?.floatBuffer)
-        mfccBuffer = mfcc.mfcc
-        preditionResult = aubioKit?.predict(mfccBuffer!!)
-        //udpSender.send(mfccBuffer!!) //use to get data from phone
-        if(preditionResult == 1 && !stopRecord) {
-            continuteNumClassTrue += 1
-            continuteNumClassFalse = 0
-        }
-        else if(preditionResult == 0 && !stopRecord){
-            continuteNumClassFalse += 1
-            continuteNumClassTrue   = 0
-        }
-
-        if(continuteNumClassFalse == stopThrehold || continuteNumClassTrue == startThrehold) {
-            if(continuteNumClassTrue == startThrehold) {
-                // start write to wav file
-                if(recording == false) {
-                    recording = true
-                    fileName = wavUtil?.newFileName()
-                    wavUtil?.openFile(fileName!!)
-                    runOnUiThread({ textView?.setText("start record") })
-                }
-                // wavUtil?.write2Wav(audioEvent?.byteBuffer)
-            }
-            else {
-                stopRecord = true
-                runOnUiThread({textView?.setText("stop recording")})
-                //start play wav file
-                if(recording) {
-                    wavUtil?.play(fileName!!)
-                    recording = false
-                }
-                //wavUtil?.closeFile()
-            }
-            continuteNumClassTrue = 0
-            continuteNumClassFalse = 0
-        }
-        */
     }
 
     fun newFileName():String {
