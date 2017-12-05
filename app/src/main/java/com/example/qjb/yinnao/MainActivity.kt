@@ -78,9 +78,17 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         mBigImageView?.showImage(Uri.parse("http://ww1.sinaimg.cn/mw690/005Fj2RDgw1f9mvl4pivvj30c82ougw3.jpg"))
 
         val ins = applicationContext.assets.open("model")
-        aubioKit = AubioKit(ins)
+        wavUtil?.aubioKit = AubioKit(ins)
 //        aubioKit?.args_init(win_s,n_filters,n_coefs,samplerate)
         //TarosDSP()
+        Thread({
+            if(wavUtil?.process() == 1) {
+                runOnUiThread({textView?.setText("古琴")})
+            }
+            else {
+                runOnUiThread({textView?.setText("未识别")})
+            }
+        },"process").start()
         CacularMFCC()
     }
 
@@ -130,47 +138,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
             override fun processingFinished() {
             }
             override fun process(audioEvent: AudioEvent): Boolean {
-                // if recording is setted,that record audio
-                if(recording && !stopRecord) {
-                    wavUtil?.write2Wav(audioEvent.byteBuffer)
-                }
-                //val res = aubioKit?.predict(audioEvent?.floatBuffer)
-                mfccBuffer = mfcc.mfcc
-                preditionResult = aubioKit?.predict(mfccBuffer!!)
-                //udpSender.send(mfccBuffer!!) //use to get data from phone
-                if(preditionResult == 1 && !stopRecord) {
-                    continuteNumClassTrue += 1
-                    continuteNumClassFalse = 0
-                }
-                else if(preditionResult == 0 && !stopRecord){
-                    continuteNumClassFalse += 1
-                    continuteNumClassTrue   = 0
-                }
-
-                if(continuteNumClassFalse == stopThrehold || continuteNumClassTrue == startThrehold) {
-                        if(continuteNumClassTrue == startThrehold) {
-                            // start write to wav file
-                            if(recording == false) {
-                                recording = true
-                                fileName = wavUtil?.newFileName()
-                                wavUtil?.openFile(fileName!!)
-                                runOnUiThread({ textView?.setText("start record") })
-                            }
-                            // wavUtil?.write2Wav(audioEvent?.byteBuffer)
-                        }
-                        else {
-                            stopRecord = true
-                            runOnUiThread({textView?.setText("stop recording")})
-                            //start play wav file
-                            if(recording) {
-                                wavUtil?.play(fileName!!)
-                                recording = false
-                            }
-                            //wavUtil?.closeFile()
-                        }
-                    continuteNumClassTrue = 0
-                    continuteNumClassFalse = 0
-                }
+                wavUtil?.bufferQueue?.offer(audioEvent?.floatBuffer)
                 return true
             }
         })
