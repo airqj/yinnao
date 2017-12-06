@@ -10,6 +10,7 @@ import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.io.FileNotFoundException
 import android.media.MediaPlayer
+import android.util.Log
 
 import com.example.qjb.yinnao.AubioKit
 import be.tarsos.dsp.io.TarsosDSPAudioFloatConverter
@@ -17,8 +18,9 @@ import java.util.concurrent.ArrayBlockingQueue
 import be.tarsos.dsp.AudioEvent
 import com.example.qjb.yinnao.Wav
 import java.nio.ByteBuffer
+import java.util.logging.Handler
 
-class WavUtils(storagePath:String) {
+class WavUtils(storagePath:String):Runnable {
 
     private val storagePath = storagePath
     private val format = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss")
@@ -31,10 +33,15 @@ class WavUtils(storagePath:String) {
     private val stopRecordThrehold  = 10
     private var enableRecord = false
 
-    public val bufferQueue = ArrayBlockingQueue<Pair<FloatArray,ByteArray>>(1024 * 1024)
-    fun process():Int {
+    val bufferQueue = ArrayBlockingQueue<Pair<FloatArray,ByteArray>>(1024 * 1024)
+
+    override fun run() {
+        process()
+    }
+    fun process() {
         while (true) {
             val pairBuffer = bufferQueue.take()
+            Log.i("a","a")
             val audioBuffer = pairBuffer?.first
             val byteArray   = pairBuffer?.second
             if(enableRecord) {

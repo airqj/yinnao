@@ -33,25 +33,26 @@ import java.io.File
 
 class MainActivity : AppCompatActivity(),OnClickListener {
 
-    private var mBigImageView:BigImageView? = null
-    private var mScrollView:ScrollView? = null
-    private var mBtnTest:ImageButton? = null
+    private var mBigImageView: BigImageView? = null
+    private var mScrollView: ScrollView? = null
+    private var mBtnTest: ImageButton? = null
     private var timer = Timer()
-    private var mBtnTestStatus:Boolean = false
-    private var textView:TextView? = null
-    private var wavUtil:WavUtils?  = null
+    private var mBtnTestStatus: Boolean = false
+    private var textView: TextView? = null
+    private var wavUtil: WavUtils? = null
+//    private var dispacher: AudioDispatcher? = null
 
-    private var fileName:String? = null
+    private var fileName: String? = null
     private var stopRecord = false
 
     private fun doAddY() {
-            mScrollView?.scrollTo(0, mScrollView?.scrollY!!.plus(1))
+        mScrollView?.scrollTo(0, mScrollView?.scrollY!!.plus(1))
     }
 
-    private val handler=object : Handler(){
+    val handler = object : Handler() {
         override fun handleMessage(msg: Message?) {
             super.handleMessage(msg)
-            val msgString=msg!!.obj
+            Thread({ createDispather() }, "unknown").start()
         }
     }
 
@@ -61,10 +62,10 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         setContentView(R.layout.activity_main)
 
         mBigImageView = findViewById(R.id.mBigImageView)
-        mScrollView   = findViewById(R.id.mScrollView)
-        mBtnTest      = findViewById(R.id.btnTest)
-        textView      = findViewById(R.id.textView)
-        wavUtil       = WavUtils(Environment.getExternalStorageDirectory().path + "/Recorders/")
+        mScrollView = findViewById(R.id.mScrollView)
+        mBtnTest = findViewById(R.id.btnTest)
+        textView = findViewById(R.id.textView)
+        wavUtil = WavUtils(Environment.getExternalStorageDirectory().path + "/Recorders/")
 
         mBtnTest?.setOnClickListener(this)
         mBigImageView?.setOptimizeDisplay(false)
@@ -72,16 +73,16 @@ class MainActivity : AppCompatActivity(),OnClickListener {
 
         val ins = applicationContext.assets.open("model")
         wavUtil?.aubioKit = AubioKit(ins)
+        createDispather()
 //        aubioKit?.args_init(win_s,n_filters,n_coefs,samplerate)
         //TarosDSP()
-        Thread({wavUtil?.process()},"process").start()
-        Thread({createDispather()},"process audio data").start()
-
-        val handler = Handler()
+        Thread({ wavUtil}, "process").start()
+//        Thread({dispacher},"process audio data").start()
+        createDispather()
     }
 
     override fun onClick(v: View?) {
-        if(v?.id == mBtnTest?.id) {
+        if (v?.id == mBtnTest?.id) {
             stopRecord = true
             wavUtil?.play(fileName!!)
             /*
@@ -115,21 +116,22 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     }
 
 
-    fun createDispather(): AudioDispatcher {
+    fun createDispather() {
         val sampleRate = 44100
         val bufferSize = 2205
         val bufferOverlap = 0
-        val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,bufferSize,bufferOverlap)
+        val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate, bufferSize, bufferOverlap)
         val mfcc = MFCC(bufferSize, sampleRate.toFloat(), 39, 40, 133.3334f, sampleRate.toFloat() / 2f);
         dispatcher.addAudioProcessor(mfcc)
         dispatcher.addAudioProcessor(object : AudioProcessor {
             override fun processingFinished() {
             }
+
             override fun process(audioEvent: AudioEvent): Boolean {
-                wavUtil?.bufferQueue?.offer(Pair(audioEvent?.floatBuffer,audioEvent?.byteBuffer))
+                wavUtil?.bufferQueue?.offer(Pair(audioEvent?.floatBuffer, audioEvent?.byteBuffer))
                 return true
             }
         })
-        return dispatcher
+        Thread({ dispatcher }, "dispacher").start()
     }
 }
