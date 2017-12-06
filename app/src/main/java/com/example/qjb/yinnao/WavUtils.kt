@@ -12,10 +12,11 @@ import java.io.FileNotFoundException
 import android.media.MediaPlayer
 
 import com.example.qjb.yinnao.AubioKit
-
+import be.tarsos.dsp.io.TarsosDSPAudioFloatConverter
 import java.util.concurrent.ArrayBlockingQueue
-
+import be.tarsos.dsp.AudioEvent
 import com.example.qjb.yinnao.Wav
+import java.nio.ByteBuffer
 
 class WavUtils(storagePath:String) {
 
@@ -30,12 +31,16 @@ class WavUtils(storagePath:String) {
     private val stopRecordThrehold  = 10
     private var enableRecord = false
 
-    public val bufferQueue = ArrayBlockingQueue<FloatArray>(1024 * 1024)
+    public val bufferQueue = ArrayBlockingQueue<Pair<FloatArray,ByteArray>>(1024 * 1024)
     fun process():Int {
         while (true) {
-            val audioBuffer = bufferQueue.take()
-            if(enableRecord) write2Wav()
-            if(aubioKit?.predict(audioBuffer)!! == 1) {
+            val pairBuffer = bufferQueue.take()
+            val audioBuffer = pairBuffer?.first
+            val byteArray   = pairBuffer?.second
+            if(enableRecord) {
+                write2Wav(byteArray!!)
+            }
+            if(aubioKit?.predict(audioBuffer!!) == 1) {
                 continuteNumClassTure +=1
                 continuteNumClassFalse = 0
             }
@@ -44,8 +49,19 @@ class WavUtils(storagePath:String) {
                 continuteNumClassTure   =0
             }
             if(continuteNumClassTure == startRecordThrehold) { // create wav file and start record
-                openFile(newFileName())
-                enableRecord = true
+                if(!enableRecord) {
+                    openFile(newFileName())
+                    enableRecord = true
+                }
+                continuteNumClassTure = 0
+            }
+            if(continuteNumClassTure == stopRecordThrehold) {
+                if(enableRecord) {
+                    // stop record
+                    closeFile()
+                    enableRecord = false
+                }
+                continuteNumClassFalse = 0
             }
         }
     }

@@ -45,6 +45,6 @@ dependencies {
     compile 'com.github.piasy:BigImageViewer:1.4.2'
     compile 'com.github.piasy:FrescoImageLoader:1.4.2'
     implementation files('libs/TarsosDSP-Android-latest.jar')
-//    compile 'com.github.CarGuo:RecordWave:v1.1.4'
     compile group: 'biz.k11i', name: 'xgboost-predictor', version: '0.2.1'
+    compile 'org.greenrobot:eventbus:3.1.1'
 }

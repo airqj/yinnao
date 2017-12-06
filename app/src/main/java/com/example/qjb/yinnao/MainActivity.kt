@@ -2,7 +2,6 @@ package com.example.qjb.yinnao
 
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
-import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -23,7 +22,8 @@ import be.tarsos.dsp.mfcc.MFCC
 import be.tarsos.dsp.AudioEvent
 import be.tarsos.dsp.AudioProcessor
 import android.content.res.AssetManager
-import android.os.Environment
+import android.os.*
+import be.tarsos.dsp.AudioDispatcher
 import org.jpmml.android.EvaluatorUtil
 import com.example.qjb.yinnao.ModelRF
 import com.example.qjb.yinnao.AubioKit
@@ -41,25 +41,18 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     private var textView:TextView? = null
     private var wavUtil:WavUtils?  = null
 
-    private var aubioKit:AubioKit? = null
-    private val win_s:Int = 2205
-    private val n_filters = 40
-    private val n_coefs = 39
-    private val samplerate = 44100
-    private val udpSender = UDP()
-
-    private var mfccBuffer:FloatArray? = null
-    private var preditionResult:Int? = null
-    private var continuteNumClassTrue:Int = 0
-    private var continuteNumClassFalse:Int = 0
-    private val startThrehold = 10
-    private val stopThrehold  = 20
-    private var recording = false
     private var fileName:String? = null
     private var stopRecord = false
 
     private fun doAddY() {
             mScrollView?.scrollTo(0, mScrollView?.scrollY!!.plus(1))
+    }
+
+    private val handler=object : Handler(){
+        override fun handleMessage(msg: Message?) {
+            super.handleMessage(msg)
+            val msgString=msg!!.obj
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,15 +74,10 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         wavUtil?.aubioKit = AubioKit(ins)
 //        aubioKit?.args_init(win_s,n_filters,n_coefs,samplerate)
         //TarosDSP()
-        Thread({
-            if(wavUtil?.process() == 1) {
-                runOnUiThread({textView?.setText("古琴")})
-            }
-            else {
-                runOnUiThread({textView?.setText("未识别")})
-            }
-        },"process").start()
-        CacularMFCC()
+        Thread({wavUtil?.process()},"process").start()
+        Thread({createDispather()},"process audio data").start()
+
+        val handler = Handler()
     }
 
     override fun onClick(v: View?) {
@@ -127,7 +115,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     }
 
 
-    fun CacularMFCC() {
+    fun createDispather(): AudioDispatcher {
         val sampleRate = 44100
         val bufferSize = 2205
         val bufferOverlap = 0
@@ -138,10 +126,10 @@ class MainActivity : AppCompatActivity(),OnClickListener {
             override fun processingFinished() {
             }
             override fun process(audioEvent: AudioEvent): Boolean {
-                wavUtil?.bufferQueue?.offer(audioEvent?.floatBuffer)
+                wavUtil?.bufferQueue?.offer(Pair(audioEvent?.floatBuffer,audioEvent?.byteBuffer))
                 return true
             }
         })
-        Thread(dispatcher, "Audio Dispatcher").start()
+        return dispatcher
     }
 }
