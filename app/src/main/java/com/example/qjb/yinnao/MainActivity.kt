@@ -27,7 +27,6 @@ import android.os.*
 import android.util.Log
 import be.tarsos.dsp.AudioDispatcher
 import org.jpmml.android.EvaluatorUtil
-import com.example.qjb.yinnao.ModelRF
 import com.example.qjb.yinnao.AubioKit
 import com.example.qjb.yinnao.UDP
 import com.example.qjb.yinnao.WavUtils
@@ -42,6 +41,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     private var mBtnTestStatus: Boolean = false
     private var textView: TextView? = null
     private var wavUtil: WavUtils? = null
+    private var recordEnable = true
 //    private var dispacher: AudioDispatcher? = null
 
     private var fileName: String? = null
@@ -57,6 +57,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
             super.handleMessage(msg)
             if(msg?.what == 0) {
                 Log.i("handler", "enter continteNumClassFalse")
+                recordEnable = false
                 textView?.setText("停止录音")
             }
             else if (msg?.what == 1) {
@@ -88,7 +89,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         val dispatcher =  createDispather()
 //        aubioKit?.args_init(win_s,n_filters,n_coefs,samplerate)
         Thread(wavUtil, "process").start()
-        Thread(dispatcher,"dispatcher")
+        Thread(dispatcher,"dispatcher").start()
 //        val mHandlerThread = HandlerThread("mHandlerThread")
     }
 
@@ -139,7 +140,9 @@ class MainActivity : AppCompatActivity(),OnClickListener {
             }
 
             override fun process(audioEvent: AudioEvent): Boolean {
-                wavUtil?.bufferQueue?.offer(Pair(mfcc?.mfcc, audioEvent?.byteBuffer))
+                if(recordEnable) {
+                    wavUtil?.bufferQueue?.offer(Pair(mfcc?.mfcc, audioEvent?.byteBuffer))
+                }
                 return true
             }
         })

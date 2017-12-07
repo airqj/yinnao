@@ -40,15 +40,16 @@ class WavUtils(storagePath:String):Runnable {
         process()
     }
     fun process() {
+        bufferQueue?.clear()
         while (true) {
             val pairBuffer = bufferQueue.take()
-            mainThreadHandler?.sendEmptyMessage(0)
             val mfcc = pairBuffer?.first
             val byteArray   = pairBuffer?.second
             if(enableRecord) {
                 write2Wav(byteArray!!)
             }
-            if(aubioKit?.predict(mfcc!!) == 1) {
+            val predictionResult = aubioKit?.predict(mfcc!!)
+            if(predictionResult == 1) {
                 continuteNumClassTure +=1
                 continuteNumClassFalse = 0
             }
@@ -66,6 +67,7 @@ class WavUtils(storagePath:String):Runnable {
             }
             if(continuteNumClassTure == stopRecordThrehold) {
                 if(enableRecord) {
+                    mainThreadHandler?.sendEmptyMessage(0)
                     // stop record
                     closeFile()
                     enableRecord = false
