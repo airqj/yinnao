@@ -31,6 +31,7 @@ import com.example.qjb.yinnao.AubioKit
 import com.example.qjb.yinnao.UDP
 import com.example.qjb.yinnao.WavUtils
 import java.io.File
+import java.util.Arrays
 
 class MainActivity : AppCompatActivity(),OnClickListener {
 
@@ -62,6 +63,9 @@ class MainActivity : AppCompatActivity(),OnClickListener {
             }
             else if (msg?.what == 1) {
                 textView?.setText("正在录音")
+            }
+            else if (msg?.what == 2) {
+                recordEnable = true
             }
         }
     }
@@ -141,6 +145,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
 
             override fun process(audioEvent: AudioEvent): Boolean {
                 if(recordEnable) {
+                    Log.i("dispather",Arrays.toString(mfcc.mfcc))
                     wavUtil?.bufferQueue?.offer(Pair(mfcc?.mfcc, audioEvent?.byteBuffer))
                 }
                 return true

@@ -18,7 +18,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import be.tarsos.dsp.AudioEvent
 import com.example.qjb.yinnao.Wav
 import java.nio.ByteBuffer
-import java.util.logging.Handler
+import java.util.Arrays
 
 class WavUtils(storagePath:String):Runnable {
 
@@ -32,6 +32,7 @@ class WavUtils(storagePath:String):Runnable {
     private val startRecordThrehold = 10
     private val stopRecordThrehold  = 10
     private var enableRecord = false
+    private var fileName:String? = null
     public  var mainThreadHandler:android.os.Handler? = null
 
     val bufferQueue = ArrayBlockingQueue<Pair<FloatArray,ByteArray>>(1024 * 1024)
@@ -45,6 +46,7 @@ class WavUtils(storagePath:String):Runnable {
             val pairBuffer = bufferQueue.take()
             val mfcc = pairBuffer?.first
             val byteArray   = pairBuffer?.second
+            Log.i("wavUtils",Arrays.toString(mfcc))
             if(enableRecord) {
                 write2Wav(byteArray!!)
             }
@@ -60,27 +62,29 @@ class WavUtils(storagePath:String):Runnable {
             if(continuteNumClassTure == startRecordThrehold) { // create wav file and start record
                 if(!enableRecord) {
                     mainThreadHandler?.sendEmptyMessage(1)
-                    openFile(newFileName())
+                    newFileName()
+                    openFile(fileName!!)
                     enableRecord = true
                 }
                 continuteNumClassTure = 0
             }
-            if(continuteNumClassTure == stopRecordThrehold) {
+            if(continuteNumClassFalse == stopRecordThrehold) {
                 if(enableRecord) {
-                    mainThreadHandler?.sendEmptyMessage(0)
+                    mainThreadHandler?.sendEmptyMessage(0) // display stop record
                     // stop record
                     closeFile()
+                    bufferQueue.clear()
                     enableRecord = false
+                    mainThreadHandler?.sendEmptyMessage(2)
                 }
                 continuteNumClassFalse = 0
             }
         }
     }
 
-    fun newFileName():String {
+    fun newFileName() {
         val mills = System.currentTimeMillis()
-        val fileName = storagePath + format.format(mills) + ".wav"
-        return fileName
+        fileName = storagePath + format.format(mills) + ".wav"
     }
 
     fun openFile(fileName:String) {
@@ -95,6 +99,8 @@ class WavUtils(storagePath:String):Runnable {
         try {
             wavFile?.flush()
             wavFile?.close()
+            val file = File(fileName)
+            Wav(file).writeWavHeader()
         } catch (e: FileNotFoundException) {
 
         }
@@ -112,16 +118,12 @@ class WavUtils(storagePath:String):Runnable {
 
     fun play(fileName: String) {
         try {
-            val file = File(fileName)
-            if (file.exists()) {
-                Wav(file).writeWavHeader()
                 val mMediaPlayer = MediaPlayer()
                 mMediaPlayer.setOnCompletionListener {  }
                 mMediaPlayer.setDataSource(fileName)
                 mMediaPlayer.prepare()
                 mMediaPlayer.start()
                 mMediaPlayer.release()
-            }
         } catch (e:FileNotFoundException) {
         }
     }

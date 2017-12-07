@@ -11,9 +11,6 @@ import biz.k11i.xgboost.util.FVec
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
-import com.example.qjb.yinnao.ModelRF.predict
-
-
 
 class AubioKit(i:InputStream) {
 
