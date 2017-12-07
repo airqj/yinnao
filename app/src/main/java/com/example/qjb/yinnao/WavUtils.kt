@@ -32,6 +32,7 @@ class WavUtils(storagePath:String):Runnable {
     private val startRecordThrehold = 10
     private val stopRecordThrehold  = 10
     private var enableRecord = false
+    public  var mainThreadHandler:android.os.Handler? = null
 
     val bufferQueue = ArrayBlockingQueue<Pair<FloatArray,ByteArray>>(1024 * 1024)
 
@@ -41,13 +42,13 @@ class WavUtils(storagePath:String):Runnable {
     fun process() {
         while (true) {
             val pairBuffer = bufferQueue.take()
-            Log.i("a","a")
-            val audioBuffer = pairBuffer?.first
+            mainThreadHandler?.sendEmptyMessage(0)
+            val mfcc = pairBuffer?.first
             val byteArray   = pairBuffer?.second
             if(enableRecord) {
                 write2Wav(byteArray!!)
             }
-            if(aubioKit?.predict(audioBuffer!!) == 1) {
+            if(aubioKit?.predict(mfcc!!) == 1) {
                 continuteNumClassTure +=1
                 continuteNumClassFalse = 0
             }
@@ -57,6 +58,7 @@ class WavUtils(storagePath:String):Runnable {
             }
             if(continuteNumClassTure == startRecordThrehold) { // create wav file and start record
                 if(!enableRecord) {
+                    mainThreadHandler?.sendEmptyMessage(1)
                     openFile(newFileName())
                     enableRecord = true
                 }

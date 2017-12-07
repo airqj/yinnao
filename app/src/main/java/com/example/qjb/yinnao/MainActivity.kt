@@ -1,5 +1,6 @@
 package com.example.qjb.yinnao
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
@@ -23,6 +24,7 @@ import be.tarsos.dsp.AudioEvent
 import be.tarsos.dsp.AudioProcessor
 import android.content.res.AssetManager
 import android.os.*
+import android.util.Log
 import be.tarsos.dsp.AudioDispatcher
 import org.jpmml.android.EvaluatorUtil
 import com.example.qjb.yinnao.ModelRF
@@ -49,10 +51,17 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         mScrollView?.scrollTo(0, mScrollView?.scrollY!!.plus(1))
     }
 
-    val handler = object : Handler() {
+    val handler = @SuppressLint("HandlerLeak")
+    object : Handler() {
         override fun handleMessage(msg: Message?) {
             super.handleMessage(msg)
-            Thread({ createDispather() }, "unknown").start()
+            if(msg?.what == 0) {
+                Log.i("handler", "enter continteNumClassFalse")
+                textView?.setText("停止录音")
+            }
+            else if (msg?.what == 1) {
+                textView?.setText("正在录音")
+            }
         }
     }
 
@@ -71,14 +80,16 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         mBigImageView?.setOptimizeDisplay(false)
         mBigImageView?.showImage(Uri.parse("http://ww1.sinaimg.cn/mw690/005Fj2RDgw1f9mvl4pivvj30c82ougw3.jpg"))
 
+        wavUtil?.mainThreadHandler = handler
+
         val ins = applicationContext.assets.open("model")
         wavUtil?.aubioKit = AubioKit(ins)
-        createDispather()
+        wavUtil?.bufferQueue?.clear()
+        val dispatcher =  createDispather()
 //        aubioKit?.args_init(win_s,n_filters,n_coefs,samplerate)
-        //TarosDSP()
-        Thread({ wavUtil}, "process").start()
-//        Thread({dispacher},"process audio data").start()
-        createDispather()
+        Thread(wavUtil, "process").start()
+        Thread(dispatcher,"dispatcher")
+//        val mHandlerThread = HandlerThread("mHandlerThread")
     }
 
     override fun onClick(v: View?) {
@@ -116,7 +127,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     }
 
 
-    fun createDispather() {
+    fun createDispather():AudioDispatcher {
         val sampleRate = 44100
         val bufferSize = 2205
         val bufferOverlap = 0
@@ -128,10 +139,12 @@ class MainActivity : AppCompatActivity(),OnClickListener {
             }
 
             override fun process(audioEvent: AudioEvent): Boolean {
-                wavUtil?.bufferQueue?.offer(Pair(audioEvent?.floatBuffer, audioEvent?.byteBuffer))
+                wavUtil?.bufferQueue?.offer(Pair(mfcc?.mfcc, audioEvent?.byteBuffer))
                 return true
             }
         })
-        Thread({ dispatcher }, "dispacher").start()
+        Log.i("MainActivity","test is running")
+        return dispatcher
+        //Thread(dispatcher, "dispacher").start()
     }
 }
