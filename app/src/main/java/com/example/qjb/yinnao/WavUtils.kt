@@ -17,8 +17,7 @@ import be.tarsos.dsp.io.TarsosDSPAudioFloatConverter
 import java.util.concurrent.ArrayBlockingQueue
 import be.tarsos.dsp.AudioEvent
 import com.example.qjb.yinnao.Wav
-import java.nio.ByteBuffer
-import java.util.Arrays
+import com.example.qjb.yinnao.Flag
 
 class WavUtils(storagePath:String):Runnable {
 
@@ -46,7 +45,6 @@ class WavUtils(storagePath:String):Runnable {
             val pairBuffer = bufferQueue.take()
             val mfcc = pairBuffer?.first
             val byteArray   = pairBuffer?.second
-            Log.i("wavUtils",Arrays.toString(mfcc))
             if(enableRecord) {
                 write2Wav(byteArray!!)
             }
@@ -61,7 +59,7 @@ class WavUtils(storagePath:String):Runnable {
             }
             if(continuteNumClassTure == startRecordThrehold) { // create wav file and start record
                 if(!enableRecord) {
-                    mainThreadHandler?.sendEmptyMessage(1)
+                    mainThreadHandler?.sendEmptyMessage(Flag.RECORDING)
                     newFileName()
                     openFile(fileName!!)
                     enableRecord = true
@@ -70,12 +68,12 @@ class WavUtils(storagePath:String):Runnable {
             }
             if(continuteNumClassFalse == stopRecordThrehold) {
                 if(enableRecord) {
-                    mainThreadHandler?.sendEmptyMessage(0) // display stop record
+                    mainThreadHandler?.sendEmptyMessage(Flag.STOPRECORD) // display stop record
                     // stop record
                     closeFile()
                     bufferQueue.clear()
                     enableRecord = false
-                    mainThreadHandler?.sendEmptyMessage(2)
+                    mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE)
                 }
                 continuteNumClassFalse = 0
             }
@@ -103,16 +101,6 @@ class WavUtils(storagePath:String):Runnable {
             Wav(file).writeWavHeader()
         } catch (e: FileNotFoundException) {
 
-        }
-    }
-
-    private fun fileSizeIsGreaterThanZero(fileName: String): Boolean {
-        try {
-            val file = File(fileName)
-            val fileLength = file.length()
-            return fileLength > 0
-        } catch (e: FileNotFoundException) {
-            return false
         }
     }
 

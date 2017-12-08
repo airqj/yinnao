@@ -1,6 +1,7 @@
 package com.example.qjb.yinnao
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
@@ -30,10 +31,15 @@ import org.jpmml.android.EvaluatorUtil
 import com.example.qjb.yinnao.AubioKit
 import com.example.qjb.yinnao.UDP
 import com.example.qjb.yinnao.WavUtils
+import com.example.qjb.yinnao.Flag
 import java.io.File
 import java.util.Arrays
+import android.Manifest
+import android.widget.Toast
+import com.lypeer.fcpermission.FcPermissions
+import com.lypeer.fcpermission.impl.FcPermissionsCallbacks
 
-class MainActivity : AppCompatActivity(),OnClickListener {
+class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks {
 
     private var mBigImageView: BigImageView? = null
     private var mScrollView: ScrollView? = null
@@ -43,6 +49,7 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     private var textView: TextView? = null
     private var wavUtil: WavUtils? = null
     private var recordEnable = true
+    private var PermissionRecord = false
 //    private var dispacher: AudioDispatcher? = null
 
     private var fileName: String? = null
@@ -56,25 +63,41 @@ class MainActivity : AppCompatActivity(),OnClickListener {
     object : Handler() {
         override fun handleMessage(msg: Message?) {
             super.handleMessage(msg)
-            if(msg?.what == 0) {
+            if(msg?.what == Flag.STOPRECORD) {
                 Log.i("handler", "enter continteNumClassFalse")
                 recordEnable = false
                 textView?.setText("停止录音")
             }
-            else if (msg?.what == 1) {
+            else if (msg?.what == Flag.RECORDING) {
                 textView?.setText("正在录音")
             }
-            else if (msg?.what == 2) {
+            else if (msg?.what == Flag.RECORDENABLE) {
                 recordEnable = true
+            }
+            else if (msg?.what == Flag.PERMRECORDGRANTED) {
+                requestWriteExternalStorage()
+            }
+            else if (msg?.what == Flag.PERMRECORDDENY) {
+                requestRecordPermission()
+            }
+            else if (msg?.what == Flag.PERMWRITEEXTERNALSTORAGEDENY) {
+                requestWriteExternalStorage()
+            }
+            else if (msg?.what == Flag.PERMWRITEEXTERNALSTORAGEGRANTED) {
+               val dispather = createDispather()
+               Thread(wavUtil,"wavUtils").start()
+               Thread(dispather,"dispather").start()
             }
         }
     }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         BigImageViewer.initialize(FrescoImageLoader.with(applicationContext));
         setContentView(R.layout.activity_main)
 
+        // wait until permission Granted
         mBigImageView = findViewById(R.id.mBigImageView)
         mScrollView = findViewById(R.id.mScrollView)
         mBtnTest = findViewById(R.id.btnTest)
@@ -90,12 +113,9 @@ class MainActivity : AppCompatActivity(),OnClickListener {
         val ins = applicationContext.assets.open("model")
         wavUtil?.aubioKit = AubioKit(ins)
         wavUtil?.bufferQueue?.clear()
-        val dispatcher =  createDispather()
-//        aubioKit?.args_init(win_s,n_filters,n_coefs,samplerate)
-        Thread(wavUtil, "process").start()
-        Thread(dispatcher,"dispatcher").start()
-//        val mHandlerThread = HandlerThread("mHandlerThread")
+        requestRecordPermission()
     }
+
 
     override fun onClick(v: View?) {
         if (v?.id == mBtnTest?.id) {
@@ -145,14 +165,45 @@ class MainActivity : AppCompatActivity(),OnClickListener {
 
             override fun process(audioEvent: AudioEvent): Boolean {
                 if(recordEnable) {
-                    Log.i("dispather",Arrays.toString(mfcc.mfcc))
-                    wavUtil?.bufferQueue?.offer(Pair(mfcc?.mfcc, audioEvent?.byteBuffer))
+                    wavUtil?.bufferQueue?.offer(Pair(mfcc.mfcc, audioEvent?.byteBuffer))
                 }
                 return true
             }
         })
-        Log.i("MainActivity","test is running")
         return dispatcher
         //Thread(dispatcher, "dispacher").start()
+    }
+
+    override fun onPermissionsDenied(p0: Int, perm: MutableList<String>?) {
+        Toast.makeText(applicationContext, "不要拒绝权限请求,需要此权限才能运行", Toast.LENGTH_LONG).show()
+        if(perm!![0] == Manifest.permission.RECORD_AUDIO) {
+            handler.sendEmptyMessage(Flag.PERMRECORDDENY)
+        }
+        if(perm!![0] == Manifest.permission.WRITE_EXTERNAL_STORAGE) {
+            handler.sendEmptyMessage(Flag.PERMWRITEEXTERNALSTORAGEDENY)
+        }
+        FcPermissions.checkDeniedPermissionsNeverAskAgain(this,"需要权限才能运行",R.string.setting,R.string.cancel,perm)
+    }
+
+    override fun onPermissionsGranted(p0: Int, p1: MutableList<String>?) {
+        Toast.makeText(applicationContext,"成功获取权限",Toast.LENGTH_LONG).show()
+        if(p1!![0] == Manifest.permission.RECORD_AUDIO) {
+            handler?.sendEmptyMessage(Flag.PERMRECORDGRANTED)
+        }
+        if(p1!![0] == Manifest.permission.WRITE_EXTERNAL_STORAGE) {
+            handler?.sendEmptyMessage(Flag.PERMWRITEEXTERNALSTORAGEGRANTED)
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        FcPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this)
+    }
+
+    private fun requestRecordPermission() {
+        FcPermissions.requestPermissions(this,"请求录音机权限",FcPermissions.REQ_PER_CODE,Manifest.permission.RECORD_AUDIO)
+    }
+    private fun requestWriteExternalStorage() {
+        FcPermissions.requestPermissions(this,"请求读取内存卡权限",FcPermissions.REQ_PER_CODE,Manifest.permission.WRITE_EXTERNAL_STORAGE)
     }
 }
