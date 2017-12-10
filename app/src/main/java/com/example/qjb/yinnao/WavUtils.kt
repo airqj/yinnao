@@ -34,7 +34,7 @@ class WavUtils(storagePath:String):Runnable {
     private var fileName:String? = null
     public  var mainThreadHandler:android.os.Handler? = null
 
-    val bufferQueue = ArrayBlockingQueue<Pair<FloatArray,ByteArray>>(1024 * 1024)
+    val bufferQueue = ArrayBlockingQueue<Pair<FloatArray,ByteArray>>(1024)
 
     override fun run() {
         process()
@@ -71,9 +71,12 @@ class WavUtils(storagePath:String):Runnable {
                     mainThreadHandler?.sendEmptyMessage(Flag.STOPRECORD) // display stop record
                     // stop record
                     closeFile()
+//                    bufferQueue.clear()
+//                    enableRecord = false
+//                    mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE)
                     bufferQueue.clear()
                     enableRecord = false
-                    mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE)
+                    play(fileName!!)
                 }
                 continuteNumClassFalse = 0
             }
@@ -105,14 +108,15 @@ class WavUtils(storagePath:String):Runnable {
     }
 
     fun play(fileName: String) {
-        try {
-                val mMediaPlayer = MediaPlayer()
-                mMediaPlayer.setOnCompletionListener {  }
-                mMediaPlayer.setDataSource(fileName)
-                mMediaPlayer.prepare()
-                mMediaPlayer.start()
-                mMediaPlayer.release()
-        } catch (e:FileNotFoundException) {
-        }
+       val mMediaPlayer = MediaPlayer()
+       mMediaPlayer.setOnCompletionListener {
+           mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE)
+           mMediaPlayer.release()
+           File(fileName).delete()
+       }
+       mainThreadHandler?.sendEmptyMessage(Flag.MEDIAPLAYERPLAYING)
+       mMediaPlayer.setDataSource(fileName)
+       mMediaPlayer.prepare()
+       mMediaPlayer.start()
     }
 }

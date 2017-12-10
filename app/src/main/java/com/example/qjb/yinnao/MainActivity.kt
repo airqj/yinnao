@@ -35,6 +35,7 @@ import com.example.qjb.yinnao.Flag
 import java.io.File
 import java.util.Arrays
 import android.Manifest
+import android.media.MediaPlayer
 import android.widget.Toast
 import com.lypeer.fcpermission.FcPermissions
 import com.lypeer.fcpermission.impl.FcPermissionsCallbacks
@@ -46,7 +47,7 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
     private var mBtnTest: ImageButton? = null
     private var timer = Timer()
     private var mBtnTestStatus: Boolean = false
-    private var textView: TextView? = null
+    private var textViewDisplay: TextView? = null
     private var wavUtil: WavUtils? = null
     private var recordEnable = true
     private var PermissionRecord = false
@@ -66,10 +67,10 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
             if(msg?.what == Flag.STOPRECORD) {
                 Log.i("handler", "enter continteNumClassFalse")
                 recordEnable = false
-                textView?.setText("停止录音")
+                textViewDisplay?.setText("停止录音")
             }
             else if (msg?.what == Flag.RECORDING) {
-                textView?.setText("正在录音")
+                textViewDisplay?.setText("正在录音")
             }
             else if (msg?.what == Flag.RECORDENABLE) {
                 recordEnable = true
@@ -88,6 +89,9 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
                Thread(wavUtil,"wavUtils").start()
                Thread(dispather,"dispather").start()
             }
+            else if (msg?.what == Flag.MEDIAPLAYERPLAYING) {
+                textViewDisplay?.setText("正在播放")
+            }
         }
     }
 
@@ -95,13 +99,14 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         BigImageViewer.initialize(FrescoImageLoader.with(applicationContext));
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.activity_replay)
 
+        /*
         // wait until permission Granted
         mBigImageView = findViewById(R.id.mBigImageView)
         mScrollView = findViewById(R.id.mScrollView)
         mBtnTest = findViewById(R.id.btnTest)
-        textView = findViewById(R.id.textView)
+        textViewDisplay = findViewById(R.id.textViewDisplay)
         wavUtil = WavUtils(Environment.getExternalStorageDirectory().path + "/Recorders/")
 
         mBtnTest?.setOnClickListener(this)
@@ -111,6 +116,14 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
         wavUtil?.mainThreadHandler = handler
 
         val ins = applicationContext.assets.open("model")
+        wavUtil?.aubioKit = AubioKit(ins)
+        wavUtil?.bufferQueue?.clear()
+        requestRecordPermission()
+        */
+        textViewDisplay = findViewById(R.id.textViewDisplay)
+        wavUtil = WavUtils(Environment.getExternalStorageDirectory().path + "/Recorders/")
+        wavUtil?.mainThreadHandler = handler
+        val ins  = applicationContext.assets.open("model")
         wavUtil?.aubioKit = AubioKit(ins)
         wavUtil?.bufferQueue?.clear()
         requestRecordPermission()
@@ -141,8 +154,8 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
         val pdh = PitchDetectionHandler { result, _ ->
             val pitchInHz = result.pitch
             runOnUiThread {
-                textView?.setText("" + pitchInHz)
-                //val text = findViewById(R.id.textView1) as TextView
+                textViewDisplay?.setText("" + pitchInHz)
+                //val text = findViewById(R.id.textViewDisplay1) as TextView
                 //text.text = "" + pitchInHz
             }
         }

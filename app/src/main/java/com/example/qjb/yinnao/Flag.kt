@@ -11,5 +11,6 @@ object Flag {
     final  val PERMRECORDDENY    = 4
     final  val PERMWRITEEXTERNALSTORAGEDENY = 5
     final  val PERMWRITEEXTERNALSTORAGEGRANTED = 6
+    final  val MEDIAPLAYERPLAYING = 6
 
 }
