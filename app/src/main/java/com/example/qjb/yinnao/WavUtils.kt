@@ -67,18 +67,19 @@ class WavUtils(storagePath:String):Runnable {
                 continuteNumClassTure = 0
             }
             if(continuteNumClassFalse == stopRecordThrehold) {
+                mainThreadHandler?.sendEmptyMessage(Flag.STOPRECORD) // display stop text and set recordEnable to false
                 if(enableRecord) {
-                    mainThreadHandler?.sendEmptyMessage(Flag.STOPRECORD) // display stop record
                     // stop record
                     closeFile()
 //                    bufferQueue.clear()
 //                    enableRecord = false
 //                    mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE)
-                    bufferQueue.clear()
                     enableRecord = false
                     play(fileName!!)
                 }
+                bufferQueue.clear()
                 continuteNumClassFalse = 0
+                mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE) // set recordEnable to ture
             }
         }
     }
