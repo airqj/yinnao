@@ -32,6 +32,7 @@ class WavUtils(storagePath:String):Runnable {
     private val stopRecordThrehold  = 10
     private var enableRecord = false
     private var fileName:String? = null
+    private var playing = false
     public  var mainThreadHandler:android.os.Handler? = null
 
     val bufferQueue = ArrayBlockingQueue<Pair<FloatArray,ByteArray>>(1024)
@@ -68,18 +69,21 @@ class WavUtils(storagePath:String):Runnable {
             }
             if(continuteNumClassFalse == stopRecordThrehold) {
                 mainThreadHandler?.sendEmptyMessage(Flag.STOPRECORD) // display stop text and set recordEnable to false
-                if(enableRecord) {
+                if(enableRecord) { // if recording
                     // stop record
                     closeFile()
 //                    bufferQueue.clear()
 //                    enableRecord = false
 //                    mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE)
                     enableRecord = false
+                    playing = true
                     play(fileName!!)
                 }
                 bufferQueue.clear()
                 continuteNumClassFalse = 0
-                mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE) // set recordEnable to ture
+                if(!playing) {
+                    mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE) // set recordEnable to ture
+                }
             }
         }
     }
@@ -111,11 +115,11 @@ class WavUtils(storagePath:String):Runnable {
     fun play(fileName: String) {
        val mMediaPlayer = MediaPlayer()
        mMediaPlayer.setOnCompletionListener {
-           mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE)
            mMediaPlayer.release()
            File(fileName).delete()
+           playing = false
+           mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE)
        }
-       mainThreadHandler?.sendEmptyMessage(Flag.MEDIAPLAYERPLAYING)
        mMediaPlayer.setDataSource(fileName)
        mMediaPlayer.prepare()
        mMediaPlayer.start()
