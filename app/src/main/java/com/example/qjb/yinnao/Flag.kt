@@ -6,7 +6,7 @@ package com.example.qjb.yinnao
 object Flag {
     final  val STOPRECORD = 0
     final  val RECORDING  = 1
-    final  val RECORDENABLE = 2
+    final  val ENABLERECORD = 2
     final  val PERMRECORDGRANTED = 3
     final  val PERMRECORDDENY    = 4
     final  val PERMWRITEEXTERNALSTORAGEDENY = 5

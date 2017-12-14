@@ -18,6 +18,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import be.tarsos.dsp.AudioEvent
 import com.example.qjb.yinnao.Wav
 import com.example.qjb.yinnao.Flag
+import java.nio.FloatBuffer
 
 class WavUtils(storagePath:String):Runnable {
 
@@ -28,7 +29,7 @@ class WavUtils(storagePath:String):Runnable {
     public var aubioKit:AubioKit? = null
     private var continuteNumClassTure = 0
     private var continuteNumClassFalse = 0
-    private val startRecordThrehold = 10
+    private val startRecordThrehold = 5
     private val stopRecordThrehold  = 10
     private var enableRecord = false
     private var fileName:String? = null
@@ -42,15 +43,18 @@ class WavUtils(storagePath:String):Runnable {
     }
     fun process() {
         bufferQueue?.clear()
+        var pairBuffer:Pair<FloatArray,ByteArray>? = null
+        var mfcc:FloatArray? = null
+        var byteArray:ByteArray? = null
         while (true) {
-            val pairBuffer = bufferQueue.take()
-            val mfcc = pairBuffer?.first
-            val byteArray   = pairBuffer?.second
+            pairBuffer = bufferQueue.take()
+            mfcc = pairBuffer?.first
+            byteArray   = pairBuffer?.second
             if(enableRecord) {
                 write2Wav(byteArray!!)
             }
-            val predictionResult = aubioKit?.predict(mfcc!!)
-            if(predictionResult == 1) {
+//            val predictionResult = aubioKit?.predict(mfcc!!)
+            if(aubioKit?.predict(mfcc!!) == 1) {
                 continuteNumClassTure +=1
                 continuteNumClassFalse = 0
             }
@@ -58,6 +62,7 @@ class WavUtils(storagePath:String):Runnable {
                 continuteNumClassFalse +=1
                 continuteNumClassTure   =0
             }
+
             if(continuteNumClassTure == startRecordThrehold) { // create wav file and start record
                 if(!enableRecord) {
                     mainThreadHandler?.sendEmptyMessage(Flag.RECORDING)
@@ -68,6 +73,7 @@ class WavUtils(storagePath:String):Runnable {
                 continuteNumClassTure = 0
             }
             if(continuteNumClassFalse == stopRecordThrehold) {
+                Log.i("WavUtils",System.currentTimeMillis().toString())
                 mainThreadHandler?.sendEmptyMessage(Flag.STOPRECORD) // display stop text and set recordEnable to false
                 if(enableRecord) { // if recording
                     // stop record
@@ -82,7 +88,7 @@ class WavUtils(storagePath:String):Runnable {
                 bufferQueue.clear()
                 continuteNumClassFalse = 0
                 if(!playing) {
-                    mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE) // set recordEnable to ture
+                    mainThreadHandler?.sendEmptyMessage(Flag.ENABLERECORD) // set recordEnable to ture
                 }
             }
         }
@@ -118,7 +124,7 @@ class WavUtils(storagePath:String):Runnable {
            mMediaPlayer.release()
            File(fileName).delete()
            playing = false
-           mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE)
+           mainThreadHandler?.sendEmptyMessage(Flag.ENABLERECORD)
        }
        mMediaPlayer.setDataSource(fileName)
        mMediaPlayer.prepare()

@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
             else if (msg?.what == Flag.RECORDING) {
                 textViewDisplay?.setText("正在录音")
             }
-            else if (msg?.what == Flag.RECORDENABLE) {
+            else if (msg?.what == Flag.ENABLERECORD) {
                 recordEnable = true
             }
             else if (msg?.what == Flag.PERMRECORDGRANTED) {
@@ -178,6 +178,7 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
 
             override fun process(audioEvent: AudioEvent): Boolean {
                 if(recordEnable) {
+                    Log.i("MainActivity",System.currentTimeMillis().toString())
                     wavUtil?.bufferQueue?.offer(Pair(mfcc.mfcc, audioEvent?.byteBuffer))
                 }
                 return true
