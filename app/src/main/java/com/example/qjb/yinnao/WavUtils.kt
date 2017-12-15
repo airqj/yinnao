@@ -77,7 +77,6 @@ class WavUtils(storagePath:String):Runnable {
                 mainThreadHandler?.sendEmptyMessage(Flag.STOPRECORD) // display stop text and set recordEnable to false
                 if(enableRecord) { // if recording
                     // stop record
-                    closeFile()
 //                    bufferQueue.clear()
 //                    enableRecord = false
 //                    mainThreadHandler?.sendEmptyMessage(Flag.RECORDENABLE)
@@ -119,6 +118,7 @@ class WavUtils(storagePath:String):Runnable {
     }
 
     fun play(fileName: String) {
+       closeFile()
        val mMediaPlayer = MediaPlayer()
        mMediaPlayer.setOnCompletionListener {
            mMediaPlayer.release()
