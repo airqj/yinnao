@@ -52,6 +52,11 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
     private var recordEnable = true
     private var PermissionRecord = false
 //    private var dispacher: AudioDispatcher? = null
+    val startThreadhold = 10
+    val stopThreadHold = 10
+    var continuteClassFalse = 0
+    var continuteClassTure  = 0
+    var processEnable = true
 
     private var fileName: String? = null
     private var stopRecord = false
@@ -65,7 +70,6 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
         override fun handleMessage(msg: Message?) {
             super.handleMessage(msg)
             if(msg?.what == Flag.STOPRECORD) {
-                Log.i("handler", "enter continteNumClassFalse")
                 recordEnable = false
                 textViewDisplay?.setText("停止录音")
             }
@@ -91,6 +95,9 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
             }
             else if (msg?.what == Flag.MEDIAPLAYERPLAYING) {
                 textViewDisplay?.setText("正在播放")
+            }
+            else if (msg?.what == Flag.ENABLEPROCESS) {
+                processEnable = true
             }
         }
     }
@@ -125,7 +132,7 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
         wavUtil?.mainThreadHandler = handler
         val ins  = applicationContext.assets.open("model")
         wavUtil?.aubioKit = AubioKit(ins)
-        wavUtil?.bufferQueue?.clear()
+        wavUtil?.audioData?.clear()
         requestRecordPermission()
     }
 
@@ -149,26 +156,11 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
 
     }
 
-    fun TarosDSP() {
-        val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(22050, 1024, 0)
-        val pdh = PitchDetectionHandler { result, _ ->
-            val pitchInHz = result.pitch
-            runOnUiThread {
-                textViewDisplay?.setText("" + pitchInHz)
-                //val text = findViewById(R.id.textViewDisplay1) as TextView
-                //text.text = "" + pitchInHz
-            }
-        }
-        val p = PitchProcessor(PitchEstimationAlgorithm.FFT_YIN, 22050f, 1024, pdh)
-        dispatcher.addAudioProcessor(p)
-        Thread(dispatcher, "Audio Dispatcher").start()
-    }
-
-
     fun createDispather():AudioDispatcher {
         val sampleRate = 44100
         val bufferSize = 2205
         val bufferOverlap = 0
+        val emptyByteArray:ByteArray = ByteArray(0)
         val dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate, bufferSize, bufferOverlap)
         val mfcc = MFCC(bufferSize, sampleRate.toFloat(), 39, 40, 133.3334f, sampleRate.toFloat() / 2f);
         dispatcher.addAudioProcessor(mfcc)
@@ -177,15 +169,37 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
             }
 
             override fun process(audioEvent: AudioEvent): Boolean {
-                if(recordEnable) {
-                    Log.i("MainActivity",System.currentTimeMillis().toString())
-                    wavUtil?.bufferQueue?.offer(Pair(mfcc.mfcc, audioEvent?.byteBuffer))
+                if(processEnable) {
+                    if (recordEnable) {
+                        wavUtil?.audioData?.offer(audioEvent?.byteBuffer)
+                    }
+                    if (wavUtil?.aubioKit?.predict(mfcc?.mfcc) == 1) {
+                        continuteClassTure += 1
+                        continuteClassFalse = 0
+                    } else {
+                        continuteClassFalse += 1
+                        continuteClassTure = 0
+                    }
+                    if (continuteClassTure == startThreadhold) {
+                        recordEnable = true
+                        continuteClassTure = 0
+                        handler.sendEmptyMessage(Flag.RECORDING)
+                    }
+                    if (continuteClassFalse == stopThreadHold) {
+                        handler.sendEmptyMessage(Flag.STOPRECORD)
+                        if (recordEnable) {
+                            processEnable = false  // stop process
+                            // recordfinished,send message to play thread
+                            handler.sendEmptyMessage(Flag.MEDIAPLAYERPLAYING)
+                            wavUtil?.audioData?.offer(emptyByteArray)
+                        }
+                        continuteClassFalse = 0
+                    }
                 }
                 return true
             }
         })
         return dispatcher
-        //Thread(dispatcher, "dispacher").start()
     }
 
     override fun onPermissionsDenied(p0: Int, perm: MutableList<String>?) {
