@@ -45,6 +45,8 @@ class WavUtils(storagePath:String):Runnable {
         while (true) {
             byteArray = audioData.take()
             if(byteArray.isEmpty()) {
+                Log.i("wavUtils play function",System.currentTimeMillis().toString())
+                closeFile()
                 play(fileName!!)
             }
             if(firstWrite) {
@@ -81,12 +83,13 @@ class WavUtils(storagePath:String):Runnable {
     }
 
     fun play(fileName: String) {
-       closeFile()
+       val mMediaPlayer = MediaPlayer()
        mMediaPlayer.setOnCompletionListener {
            mMediaPlayer.release()
            File(fileName).delete()
            firstWrite = true
            playing = false
+           mMediaPlayer.release()
            mainThreadHandler?.sendEmptyMessage(Flag.ENABLEPROCESS)
        }
        mMediaPlayer.setDataSource(fileName)

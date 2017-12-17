@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
     private var recordEnable = true
     private var PermissionRecord = false
 //    private var dispacher: AudioDispatcher? = null
-    val startThreadhold = 10
+    val startThreadhold = 5
     val stopThreadHold = 10
     var continuteClassFalse = 0
     var continuteClassTure  = 0
@@ -190,7 +190,8 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
                         if (recordEnable) {
                             processEnable = false  // stop process
                             // recordfinished,send message to play thread
-                            handler.sendEmptyMessage(Flag.MEDIAPLAYERPLAYING)
+                     //       handler.sendEmptyMessage(Flag.MEDIAPLAYERPLAYING)
+                            Log.i("MainActi,emptyByteArray",System.currentTimeMillis().toString())
                             wavUtil?.audioData?.offer(emptyByteArray)
                         }
                         continuteClassFalse = 0
