@@ -35,7 +35,9 @@ import com.example.qjb.yinnao.Flag
 import java.io.File
 import java.util.Arrays
 import android.Manifest
+import android.media.AudioManager
 import android.media.MediaPlayer
+import android.view.KeyEvent
 import android.widget.Toast
 import com.lypeer.fcpermission.FcPermissions
 import com.lypeer.fcpermission.impl.FcPermissionsCallbacks
@@ -52,6 +54,7 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
     private var recordEnable = true
     private var PermissionRecord = false
 //    private var dispacher: AudioDispatcher? = null
+    private var mAudioManager:AudioManager? = null
     val startThreadhold = 5
     val stopThreadHold = 10
     var continuteClassFalse = 0
@@ -102,6 +105,15 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
         }
     }
 
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if(keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            mAudioManager?.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, AudioManager.FLAG_SHOW_UI)
+        }
+        else {
+            mAudioManager?.adjustStreamVolume(AudioManager.STREAM_MUSIC,AudioManager.ADJUST_RAISE,AudioManager.FLAG_SHOW_UI)
+        }
+        return super.onKeyDown(keyCode, event)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -127,8 +139,10 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
         wavUtil?.bufferQueue?.clear()
         requestRecordPermission()
         */
+        mAudioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         textViewDisplay = findViewById(R.id.textViewDisplay)
-        wavUtil = WavUtils(Environment.getExternalStorageDirectory().path + "/Recorders/")
+        createDir()
+        wavUtil = WavUtils(Environment.getExternalStorageDirectory().path + File.separator + "yinnao" + File.separator)
         wavUtil?.mainThreadHandler = handler
         val ins  = applicationContext.assets.open("model")
         wavUtil?.aubioKit = AubioKit(ins)
@@ -203,6 +217,13 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
         return dispatcher
     }
 
+    fun createDir() {
+        val dir = File(Environment.getExternalStorageDirectory().path + File.separator +"yinnao")
+        if(!dir.exists()) {
+            dir.mkdir()
+        }
+    }
+
     override fun onPermissionsDenied(p0: Int, perm: MutableList<String>?) {
         Toast.makeText(applicationContext, "不要拒绝权限请求,需要此权限才能运行", Toast.LENGTH_LONG).show()
         if(perm!![0] == Manifest.permission.RECORD_AUDIO) {
@@ -232,6 +253,7 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
     private fun requestRecordPermission() {
         FcPermissions.requestPermissions(this,"请求录音机权限",FcPermissions.REQ_PER_CODE,Manifest.permission.RECORD_AUDIO)
     }
+
     private fun requestWriteExternalStorage() {
         FcPermissions.requestPermissions(this,"请求读取内存卡权限",FcPermissions.REQ_PER_CODE,Manifest.permission.WRITE_EXTERNAL_STORAGE)
     }

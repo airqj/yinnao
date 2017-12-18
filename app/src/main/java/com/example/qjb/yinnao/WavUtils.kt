@@ -44,17 +44,20 @@ class WavUtils(storagePath:String):Runnable {
         var byteArray:ByteArray? = null
         while (true) {
             byteArray = audioData.take()
-            if(byteArray.isEmpty()) {
-                Log.i("wavUtils play function",System.currentTimeMillis().toString())
-                closeFile()
-                play(fileName!!)
-            }
             if(firstWrite) {
                 newFileName()
                 openFile(fileName!!)
                 firstWrite = false
             }
-            write2Wav(byteArray)
+            if(byteArray.isEmpty()) {
+                Log.i("wavUtils play function",System.currentTimeMillis().toString())
+                closeFile()
+                play(fileName!!)
+            }
+            else {
+                write2Wav(byteArray)
+            }
+
         }
     }
 
@@ -90,6 +93,7 @@ class WavUtils(storagePath:String):Runnable {
            firstWrite = true
            playing = false
            mMediaPlayer.release()
+           Log.i("play finished","Flag.ENABLEPROCESS")
            mainThreadHandler?.sendEmptyMessage(Flag.ENABLEPROCESS)
        }
        mMediaPlayer.setDataSource(fileName)
