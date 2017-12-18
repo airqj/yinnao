@@ -72,6 +72,25 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
     object : Handler() {
         override fun handleMessage(msg: Message?) {
             super.handleMessage(msg)
+            when(msg?.what) {
+                Flag.STOPRECORD -> {recordEnable = false;textViewDisplay?.setText("停止录音")}
+                Flag.RECORDING  -> {textViewDisplay?.setText("正在录音")}
+                Flag.ENABLERECORD -> {recordEnable = true}
+                Flag.PERMRECORDGRANTED -> {requestWriteExternalStorage()}
+                Flag.PERMRECORDDENY -> {requestRecordPermission()}
+                Flag.PERMWRITEEXTERNALSTORAGEDENY -> {requestWriteExternalStorage()}
+                Flag.PERMWRITEEXTERNALSTORAGEGRANTED -> {
+                    val dispather = createDispather()
+                    Thread(wavUtil,"wavUtils").start()
+                    Thread(dispather,"dispather").start()
+                }
+                Flag.MEDIAPLAYERPLAYING -> {
+                    Log.i("mainActivity","playing")
+                    textViewDisplay?.setText("正在播放")
+                }
+                Flag.ENABLEPROCESS -> {processEnable = true}
+            }
+            /*
             if(msg?.what == Flag.STOPRECORD) {
                 recordEnable = false
                 textViewDisplay?.setText("停止录音")
@@ -97,11 +116,13 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
                Thread(dispather,"dispather").start()
             }
             else if (msg?.what == Flag.MEDIAPLAYERPLAYING) {
+                Log.i("mainActivity","playing")
                 textViewDisplay?.setText("正在播放")
             }
             else if (msg?.what == Flag.ENABLEPROCESS) {
                 processEnable = true
             }
+            */
         }
     }
 

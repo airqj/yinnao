@@ -52,6 +52,7 @@ class WavUtils(storagePath:String):Runnable {
             if(byteArray.isEmpty()) {
                 Log.i("wavUtils play function",System.currentTimeMillis().toString())
                 closeFile()
+//                mainThreadHandler?.sendEmptyMessage(Flag.MEDIAPLAYERPLAYING)
                 play(fileName!!)
             }
             else {
