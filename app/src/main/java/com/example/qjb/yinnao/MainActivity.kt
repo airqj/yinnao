@@ -31,6 +31,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.media.AudioManager
+import android.media.MediaPlayer
 import android.view.KeyEvent
 import android.widget.*
 import com.lypeer.fcpermission.FcPermissions
@@ -44,6 +45,7 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
     private var mBigImageView: BigImageView? = null
     private var mScrollView: ScrollView? = null
     private var mBtnTest: ImageButton? = null
+    private var mImageBtnPlayStatus:ImageButton? = null
     private var mBtnFileSelector:Button? = null
     private var timer = Timer()
     private var mBtnTestStatus: Boolean = false
@@ -52,6 +54,7 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
     private var wavUtil: WavUtils? = null
     private var recordEnable = false
     private var PermissionRecord = false
+    private var audioFileName:String? = null
 //    private var dispacher: AudioDispatcher? = null
     private var mAudioManager:AudioManager? = null
     val startThreadhold = 5
@@ -127,14 +130,16 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
         requestRecordPermission()
         */
         mBtnFileSelector = findViewById(R.id.btnFileSelector)
+        mImageBtnPlayStatus = findViewById(R.id.imgBtnPlayStatus)
         mBtnFileSelector?.setOnClickListener(this)
+        mImageBtnPlayStatus?.setOnClickListener(this)
         mAudioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         textViewDisplay = findViewById(R.id.textViewDisplay)
         rangeSeekBar    = findViewById(R.id.rangeSeekBar)
         rangeSeekBar?.setRangeValues(10F,100F)
         rangeSeekBar?.selectedMinValue = 20F
         rangeSeekBar?.selectedMaxValue = 80F
-        rangeSeekBar?.setTextAboveThumbsColorResource(android.R.color.holo_blue_dark);
+        rangeSeekBar?.setTextAboveThumbsColorResource(android.R.color.holo_red_dark);
 
         createDir()
         wavUtil = WavUtils(Environment.getExternalStorageDirectory().path + File.separator + "yinnao" + File.separator)
@@ -147,10 +152,20 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
 
 
     override fun onClick(v: View?) {
-        if (v?.id == mBtnFileSelector?.id) {
-            LFilePicker().withActivity(this).
-                    withRequestCode(1000).
-                    withTitle("选择音频文件").start()
+        when(v?.id) {
+            mBtnFileSelector?.id -> {
+                LFilePicker().withActivity(this).
+                        withRequestCode(1000).
+                        withTitle("选择音频文件").start()
+            }
+            mImageBtnPlayStatus?.id -> {
+                val mMediaPlayer = MediaPlayer()
+                mMediaPlayer.setDataSource(audioFileName)
+                mMediaPlayer.prepare()
+                mMediaPlayer.start()
+            }
+        }
+
             /*
             if(mBtnTestStatus == false) {
                 timer.schedule(timerTask { doAddY() }, 1000, 100)
@@ -162,15 +177,15 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
                 timer = Timer()
             }
             */
-        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if(resultCode == Activity.RESULT_OK) {
             if(requestCode == 1000) {
-                val file = data?.getStringArrayListExtra(Constant.RESULT_INFO)
-                Log.i("fileSelector",file!![0])
+                val fileName = data?.getStringArrayListExtra(Constant.RESULT_INFO)!![0]
+                audioFileName = fileName
+                mBtnFileSelector?.setText(fileName.split("/").last())
             }
         }
     }

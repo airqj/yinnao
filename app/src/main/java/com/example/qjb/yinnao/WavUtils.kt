@@ -53,7 +53,7 @@ class WavUtils(storagePath:String):Runnable {
                 Log.i("wavUtils play function",System.currentTimeMillis().toString())
                 closeFile()
 //                mainThreadHandler?.sendEmptyMessage(Flag.MEDIAPLAYERPLAYING)
-                play(fileName!!)
+                play(fileName!!,Flag.FLAGPLAYINGRECORD)
             }
             else {
                 write2Wav(byteArray)
@@ -86,7 +86,7 @@ class WavUtils(storagePath:String):Runnable {
         }
     }
 
-    fun play(fileName: String) {
+    fun play(fileName: String,flag:Int) {
        val mMediaPlayer = MediaPlayer()
        mMediaPlayer.setOnCompletionListener {
            mMediaPlayer.release()
@@ -95,7 +95,7 @@ class WavUtils(storagePath:String):Runnable {
            playing = false
            mMediaPlayer.release()
            Log.i("play finished","Flag.ENABLEPROCESS")
-           mainThreadHandler?.sendEmptyMessage(Flag.ENABLEPROCESS)
+       //    mainThreadHandler?.sendEmptyMessage(Flag.ENABLEPROCESS)
        }
        mMediaPlayer.setDataSource(fileName)
        mMediaPlayer.prepare()

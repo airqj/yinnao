@@ -13,4 +13,6 @@ object Flag {
     final  val PERMWRITEEXTERNALSTORAGEGRANTED = 6
     final  val MEDIAPLAYERPLAYING = 6
     final  val ENABLEPROCESS = 7
+    final  val FLAGPLAYINGRECORD = 8
+    final  val FLAGPLAYINGFILE   = 9
 }
