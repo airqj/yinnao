@@ -7,18 +7,12 @@ import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.ScrollView
 import android.view.View.OnClickListener
-import android.widget.ImageButton
 import com.github.piasy.biv.BigImageViewer
 import com.github.piasy.biv.view.BigImageView
 import com.github.piasy.biv.loader.fresco.FrescoImageLoader
 import java.util.*
 import kotlin.concurrent.timerTask
-import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm
-import be.tarsos.dsp.pitch.PitchProcessor
-import android.widget.TextView
-import be.tarsos.dsp.pitch.PitchDetectionHandler
 import be.tarsos.dsp.io.android.AudioDispatcherFactory
 import be.tarsos.dsp.mfcc.MFCC
 import be.tarsos.dsp.AudioEvent
@@ -33,25 +27,30 @@ import com.example.qjb.yinnao.UDP
 import com.example.qjb.yinnao.WavUtils
 import com.example.qjb.yinnao.Flag
 import java.io.File
-import java.util.Arrays
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.media.AudioManager
-import android.media.MediaPlayer
 import android.view.KeyEvent
-import android.widget.Toast
+import android.widget.*
 import com.lypeer.fcpermission.FcPermissions
 import com.lypeer.fcpermission.impl.FcPermissionsCallbacks
+import com.leon.lfilepickerlibrary.LFilePicker
+import com.leon.lfilepickerlibrary.utils.Constant
+import org.florescu.android.rangeseekbar.RangeSeekBar
 
 class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks {
 
     private var mBigImageView: BigImageView? = null
     private var mScrollView: ScrollView? = null
     private var mBtnTest: ImageButton? = null
+    private var mBtnFileSelector:Button? = null
     private var timer = Timer()
     private var mBtnTestStatus: Boolean = false
     private var textViewDisplay: TextView? = null
+    private var rangeSeekBar:RangeSeekBar<Float>? = null
     private var wavUtil: WavUtils? = null
-    private var recordEnable = true
+    private var recordEnable = false
     private var PermissionRecord = false
 //    private var dispacher: AudioDispatcher? = null
     private var mAudioManager:AudioManager? = null
@@ -90,39 +89,6 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
                 }
                 Flag.ENABLEPROCESS -> {processEnable = true}
             }
-            /*
-            if(msg?.what == Flag.STOPRECORD) {
-                recordEnable = false
-                textViewDisplay?.setText("停止录音")
-            }
-            else if (msg?.what == Flag.RECORDING) {
-                textViewDisplay?.setText("正在录音")
-            }
-            else if (msg?.what == Flag.ENABLERECORD) {
-                recordEnable = true
-            }
-            else if (msg?.what == Flag.PERMRECORDGRANTED) {
-                requestWriteExternalStorage()
-            }
-            else if (msg?.what == Flag.PERMRECORDDENY) {
-                requestRecordPermission()
-            }
-            else if (msg?.what == Flag.PERMWRITEEXTERNALSTORAGEDENY) {
-                requestWriteExternalStorage()
-            }
-            else if (msg?.what == Flag.PERMWRITEEXTERNALSTORAGEGRANTED) {
-               val dispather = createDispather()
-               Thread(wavUtil,"wavUtils").start()
-               Thread(dispather,"dispather").start()
-            }
-            else if (msg?.what == Flag.MEDIAPLAYERPLAYING) {
-                Log.i("mainActivity","playing")
-                textViewDisplay?.setText("正在播放")
-            }
-            else if (msg?.what == Flag.ENABLEPROCESS) {
-                processEnable = true
-            }
-            */
         }
     }
 
@@ -160,8 +126,16 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
         wavUtil?.bufferQueue?.clear()
         requestRecordPermission()
         */
+        mBtnFileSelector = findViewById(R.id.btnFileSelector)
+        mBtnFileSelector?.setOnClickListener(this)
         mAudioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         textViewDisplay = findViewById(R.id.textViewDisplay)
+        rangeSeekBar    = findViewById(R.id.rangeSeekBar)
+        rangeSeekBar?.setRangeValues(10F,100F)
+        rangeSeekBar?.selectedMinValue = 20F
+        rangeSeekBar?.selectedMaxValue = 80F
+        rangeSeekBar?.setTextAboveThumbsColorResource(android.R.color.holo_blue_dark);
+
         createDir()
         wavUtil = WavUtils(Environment.getExternalStorageDirectory().path + File.separator + "yinnao" + File.separator)
         wavUtil?.mainThreadHandler = handler
@@ -173,9 +147,10 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
 
 
     override fun onClick(v: View?) {
-        if (v?.id == mBtnTest?.id) {
-            stopRecord = true
-            wavUtil?.play(fileName!!)
+        if (v?.id == mBtnFileSelector?.id) {
+            LFilePicker().withActivity(this).
+                    withRequestCode(1000).
+                    withTitle("选择音频文件").start()
             /*
             if(mBtnTestStatus == false) {
                 timer.schedule(timerTask { doAddY() }, 1000, 100)
@@ -188,7 +163,16 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
             }
             */
         }
+    }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(resultCode == Activity.RESULT_OK) {
+            if(requestCode == 1000) {
+                val file = data?.getStringArrayListExtra(Constant.RESULT_INFO)
+                Log.i("fileSelector",file!![0])
+            }
+        }
     }
 
     fun createDispather():AudioDispatcher {
@@ -202,7 +186,6 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
         dispatcher.addAudioProcessor(object : AudioProcessor {
             override fun processingFinished() {
             }
-
             override fun process(audioEvent: AudioEvent): Boolean {
                 if(processEnable) {
                     if (recordEnable) {

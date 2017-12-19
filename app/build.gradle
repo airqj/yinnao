@@ -47,4 +47,6 @@ dependencies {
     implementation files('libs/TarsosDSP-Android-latest.jar')
     compile group: 'biz.k11i', name: 'xgboost-predictor', version: '0.2.1'
     compile 'com.github.lypeer:FcPermissions:v0.0.1'
+    compile 'com.leon:lfilepickerlibrary:1.6.0'
+    compile 'org.florescu.android.rangeseekbar:rangeseekbar-library:0.3.0'
 }
