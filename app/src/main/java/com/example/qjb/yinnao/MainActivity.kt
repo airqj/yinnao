@@ -184,7 +184,7 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
         if(resultCode == Activity.RESULT_OK) {
             if(requestCode == 1000) {
                 val fileName = data?.getStringArrayListExtra(Constant.RESULT_INFO)!![0]
-                audioFileName = fileName
+                wavUtil?.audioFileName = fileName
                 mBtnFileSelector?.setText(fileName.split("/").last())
             }
         }

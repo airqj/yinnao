@@ -4,6 +4,7 @@ package com.example.qjb.yinnao
  * Created by qinjianbo on 17-11-29.
  */
 
+import android.app.Notification
 import android.media.*
 import java.io.File
 import java.io.FileOutputStream
@@ -28,6 +29,7 @@ class WavUtils(storagePath:String):Runnable {
     private var wavFile: FileOutputStream? = null
     private val mMediaPlayer = MediaPlayer()
     public var aubioKit:AubioKit? = null
+    public var audioFileName:String? = null
     private var fileName:String? = null
     private var playing = false
     private var firstWrite = true
@@ -53,7 +55,7 @@ class WavUtils(storagePath:String):Runnable {
                 Log.i("wavUtils play function",System.currentTimeMillis().toString())
                 closeFile()
 //                mainThreadHandler?.sendEmptyMessage(Flag.MEDIAPLAYERPLAYING)
-                play(fileName!!,Flag.FLAGPLAYINGRECORD)
+                play()
             }
             else {
                 write2Wav(byteArray)
@@ -86,14 +88,25 @@ class WavUtils(storagePath:String):Runnable {
         }
     }
 
-    fun play(fileName: String,flag:Int) {
-       val mMediaPlayer = MediaPlayer()
+    fun play() {
+        if(audioFileName != null) {
+            mMediaPlayer.reset()
+            mMediaPlayer.setOnCompletionListener { play() }
+            mMediaPlayer.setDataSource(audioFileName)
+            mMediaPlayer.prepare()
+            mMediaPlayer.start()
+        }
+        else {
+            playRecordFile()
+        }
+    }
+
+    fun playRecordFile() {
+       mMediaPlayer.reset()
        mMediaPlayer.setOnCompletionListener {
-           mMediaPlayer.release()
            File(fileName).delete()
            firstWrite = true
            playing = false
-           mMediaPlayer.release()
            Log.i("play finished","Flag.ENABLEPROCESS")
        //    mainThreadHandler?.sendEmptyMessage(Flag.ENABLEPROCESS)
        }
