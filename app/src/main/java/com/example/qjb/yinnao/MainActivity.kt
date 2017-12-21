@@ -39,6 +39,8 @@ import com.lypeer.fcpermission.impl.FcPermissionsCallbacks
 import com.leon.lfilepickerlibrary.LFilePicker
 import com.leon.lfilepickerlibrary.utils.Constant
 import org.florescu.android.rangeseekbar.RangeSeekBar
+import org.florescu.android.rangeseekbar.RangeSeekBar.OnRangeSeekBarChangeListener
+import kotlin.math.max
 
 class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks {
 
@@ -136,10 +138,13 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
         mAudioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         textViewDisplay = findViewById(R.id.textViewDisplay)
         rangeSeekBar    = findViewById(R.id.rangeSeekBar)
-        rangeSeekBar?.setRangeValues(10F,100F)
-        rangeSeekBar?.selectedMinValue = 20F
-        rangeSeekBar?.selectedMaxValue = 80F
         rangeSeekBar?.setTextAboveThumbsColorResource(android.R.color.holo_red_dark);
+
+        rangeSeekBar?.setOnRangeSeekBarChangeListener(OnRangeSeekBarChangeListener<Float> { bar, minValue, maxValue ->
+            wavUtil?.maxValue = maxValue
+            wavUtil?.minValue = minValue
+            Log.i("mainActivity: maxValue",maxValue.toString())
+        })
 
         createDir()
         wavUtil = WavUtils(Environment.getExternalStorageDirectory().path + File.separator + "yinnao" + File.separator)
@@ -149,7 +154,6 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
         wavUtil?.audioData?.clear()
         requestRecordPermission()
     }
-
 
     override fun onClick(v: View?) {
         when(v?.id) {
@@ -185,6 +189,16 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
             if(requestCode == 1000) {
                 val fileName = data?.getStringArrayListExtra(Constant.RESULT_INFO)!![0]
                 wavUtil?.audioFileName = fileName
+                runOnUiThread({
+                    val mMediaPlayer = MediaPlayer()
+                    mMediaPlayer.setDataSource(fileName)
+                    mMediaPlayer.prepare()
+                    val duration = (mMediaPlayer.duration / 1000 / 60).toInt().toFloat() +
+                                    (mMediaPlayer.duration / 1000 %60).toInt() / 100F
+                    Log.i("mainActivity:duration ",duration.toString())
+                    rangeSeekBar?.setRangeValues(0F,duration)
+                    mMediaPlayer.release()
+                })
                 mBtnFileSelector?.setText(fileName.split("/").last())
             }
         }

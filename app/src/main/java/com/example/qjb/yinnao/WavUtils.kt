@@ -33,6 +33,8 @@ class WavUtils(storagePath:String):Runnable {
     private var fileName:String? = null
     private var playing = false
     private var firstWrite = true
+    public  var maxValue:Float = 0F
+    public  var minValue:Float = 0F
     public  var mainThreadHandler:android.os.Handler? = null
 
     val bufferQueue = ArrayBlockingQueue<Pair<FloatArray,ByteArray>>(1024)
@@ -91,7 +93,7 @@ class WavUtils(storagePath:String):Runnable {
     fun play() {
         if(audioFileName != null) {
             mMediaPlayer.reset()
-            mMediaPlayer.setOnCompletionListener { play() }
+            mMediaPlayer.setOnCompletionListener { playRecordFile() }
             mMediaPlayer.setDataSource(audioFileName)
             mMediaPlayer.prepare()
             mMediaPlayer.start()
