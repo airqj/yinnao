@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity(),OnClickListener,FcPermissionsCallbacks 
     private var audioFileName:String? = null
 //    private var dispacher: AudioDispatcher? = null
     private var mAudioManager:AudioManager? = null
-    val startThreadhold = 5
+    val startThreadhold = 10
     val stopThreadHold = 10
     var continuteClassFalse = 0
     var continuteClassTure  = 0

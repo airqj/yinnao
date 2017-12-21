@@ -21,13 +21,16 @@ import be.tarsos.dsp.AudioEvent
 import com.example.qjb.yinnao.Wav
 import com.example.qjb.yinnao.Flag
 import java.nio.FloatBuffer
+import kotlin.concurrent.timerTask
+import java.util.*
+import kotlin.math.absoluteValue
 
 class WavUtils(storagePath:String):Runnable {
 
     private val storagePath = storagePath
     private val format = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss")
     private var wavFile: FileOutputStream? = null
-    private val mMediaPlayer = MediaPlayer()
+    public val mMediaPlayer = MediaPlayer()
     public var aubioKit:AubioKit? = null
     public var audioFileName:String? = null
     private var fileName:String? = null
@@ -35,6 +38,7 @@ class WavUtils(storagePath:String):Runnable {
     private var firstWrite = true
     public  var maxValue:Float = 0F
     public  var minValue:Float = 0F
+    private var timer:Timer? = null
     public  var mainThreadHandler:android.os.Handler? = null
 
     val bufferQueue = ArrayBlockingQueue<Pair<FloatArray,ByteArray>>(1024)
@@ -90,12 +94,32 @@ class WavUtils(storagePath:String):Runnable {
         }
     }
 
+    fun minute2mills(m:Float):Int {
+        val min = m.toInt()
+        val sec = (m - min) * 100
+        return (min * 60 + sec.toInt()) * 1000
+    }
+
+    fun checkCurrentPosition() {
+        val currentPosition = mMediaPlayer.currentPosition
+        val distance = Math.abs(currentPosition - minute2mills(maxValue))
+        Log.i("wavUtils",distance.toString())
+        if(distance <= 1000) {
+            timer?.cancel()
+            mMediaPlayer.stop()
+            playRecordFile()
+        }
+    }
+
     fun play() {
         if(audioFileName != null) {
             mMediaPlayer.reset()
             mMediaPlayer.setOnCompletionListener { playRecordFile() }
             mMediaPlayer.setDataSource(audioFileName)
             mMediaPlayer.prepare()
+            mMediaPlayer.seekTo(minute2mills(minValue))
+            timer = Timer()
+            timer?.schedule(timerTask { checkCurrentPosition() },0,1000)
             mMediaPlayer.start()
         }
         else {
@@ -110,7 +134,7 @@ class WavUtils(storagePath:String):Runnable {
            firstWrite = true
            playing = false
            Log.i("play finished","Flag.ENABLEPROCESS")
-       //    mainThreadHandler?.sendEmptyMessage(Flag.ENABLEPROCESS)
+           mainThreadHandler?.sendEmptyMessage(Flag.ENABLEPROCESS)
        }
        mMediaPlayer.setDataSource(fileName)
        mMediaPlayer.prepare()
