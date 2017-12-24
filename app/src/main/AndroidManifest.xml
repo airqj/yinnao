@@ -8,15 +8,18 @@
         android:icon="@mipmap/ic_launcher"
         android:label="吟猱绰注"
         tools:replace="android:label"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".SplashActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".MainActivity"
+            android:label="吟猱绰注"
+            android:theme="@style/AppTheme">
         </activity>
     </application>
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
